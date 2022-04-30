@@ -3,6 +3,7 @@ host = "127.0.0.1"
 port = 8000
 
 [tracker]
-path    = ".markers"
-uniques = 50
-size    = 5
+path                  = ".markers"
+failed_read_threshold = 10
+uniques               = 50
+size                  = 5
