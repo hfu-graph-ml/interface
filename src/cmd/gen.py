@@ -1,6 +1,6 @@
 import click
 
-from tracker.generator import Generator, Error
+from tracker.generator import Generator
 
 
 def execute(config_path: str, path: str, size: int, num: int, uniq: int, res: int):
@@ -24,6 +24,10 @@ def execute(config_path: str, path: str, size: int, num: int, uniq: int, res: in
     '''
     gen = Generator(size, uniq, path)
 
-    err = gen.generate(num, res)
+    click.echo(f'Generating 4 calibration and \'{num}\' node markers')
+
+    err = gen.generate_combined(num, res)
     if err != None:
         click.echo(err)
+
+    click.echo(f'Saved markers in \'{path}\'')
