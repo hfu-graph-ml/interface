@@ -17,3 +17,9 @@ This
 1. Creates a new VENV
 2. Activates the VENV. Enter `deactivate` in your shell to exit the VENV
 3. Install all required dependencies
+
+Run the application like:
+
+```shell
+python src/main.py <SUBCOMMAND>
+```
