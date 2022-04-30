@@ -50,21 +50,3 @@ def url_from(base: str, paths: tuple) -> str:
         url = '/'.join([url, p.lower()])
 
     return url
-
-
-def aruco_type_from(res: int, uniq: int) -> str:
-    '''
-    Returns a ArUco type string in the form <RES>X<RES>_<UNIQ>.
-
-    Parameters
-    ----------
-    res : int
-        Resolution (X and Y), e.g. 5X5
-    uniq : int
-        Possible number of unique markers
-
-    Returns
-    type : str
-        Formatted ArUco type string
-    '''
-    return f'{res}X{res}_{uniq}'

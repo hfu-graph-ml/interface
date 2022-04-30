@@ -4,28 +4,7 @@ import numpy as np
 import cv2 as cv
 import os
 
-import utils.fmt as fmt
-
-from .types import Error
-
-MARKER_MAP = {
-    '4X4_50': cv.aruco.DICT_4X4_50,
-    '4X4_100': cv.aruco.DICT_4X4_100,
-    '4X4_250': cv.aruco.DICT_4X4_250,
-    '4X4_1000': cv.aruco.DICT_4X4_1000,
-    '5X5_50': cv.aruco.DICT_5X5_50,
-    '5X5_100': cv.aruco.DICT_5X5_100,
-    '5X5_250': cv.aruco.DICT_5X5_250,
-    '5X5_1000': cv.aruco.DICT_5X5_1000,
-    '6X6_50': cv.aruco.DICT_6X6_50,
-    '6X6_100': cv.aruco.DICT_6X6_100,
-    '6X6_250': cv.aruco.DICT_6X6_250,
-    '6X6_1000': cv.aruco.DICT_6X6_1000,
-    '7X7_50': cv.aruco.DICT_7X7_50,
-    '7X7_100': cv.aruco.DICT_7X7_100,
-    '7X7_250': cv.aruco.DICT_7X7_250,
-    '7X7_1000': cv.aruco.DICT_7X7_1000,
-}
+import tracker.types as types
 
 
 @unique
@@ -41,40 +20,18 @@ class Generator:
     '''
     This class generates ArUco markers / tags.
     '''
-    _dict: dict = None
-    _type: int = -1
-    _path: str = ''
 
     def __init__(self, size: int, uniq: int, path: str) -> None:
-        typ = fmt.aruco_type_from(size, uniq)
-        t, ok = self.get_type(typ)
+        typ = types.aruco_type_from(size, uniq)
+        t, ok = types.aruco_dict_from(typ)
         if not ok:
-            return
+            raise Exception('Failed to instantiate Generator object')
 
         self._dict = cv.aruco.Dictionary_get(t)
         self._path = path
         self._type = t
 
-    def get_type(self, k: str) -> Tuple[int, bool]:
-        '''
-        Returns ArUco dict with 'k' as key.
-
-        Paramaters
-        ----------
-        k : str
-            Map key to ArUco dict
-
-        Returns
-        -------
-        result : Tuple[int, bool]
-            Returns index and True if k exists. -1 and False otherwise
-        '''
-        if MARKER_MAP[k] == None:
-            return -1, False
-
-        return MARKER_MAP[k], True
-
-    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> Error:
+    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> types.Error:
         '''
         Generate a variable number of ArUco markers.
 
@@ -98,10 +55,10 @@ class Generator:
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return Error('Generator initialized with invalid ArUco type')
+            return types.Error('Generator initialized with invalid ArUco type')
 
         if number <= 0:
-            return Error('Invalid number of markers')
+            return types.Error('Invalid number of markers')
 
         # Make sure the output folder exists
         path = os.path.join(self._path, usage.str())
@@ -137,7 +94,7 @@ class Generator:
 
         return None
 
-    def generate_combined(self, number: int, res: int) -> Error:
+    def generate_combined(self, number: int, res: int) -> types.Error:
         '''
         Generate calibration and node markers at the same time.
 
