@@ -3,3 +3,6 @@ host = "127.0.0.1"
 port = 8000
 
 [tracker]
+path    = ".markers"
+uniques = 50
+size    = 5

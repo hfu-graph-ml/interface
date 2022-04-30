@@ -100,6 +100,9 @@ class Generator:
         if self._type == -1 or self._dict == None:
             return Error('Generator initialized with invalid ArUco type')
 
+        if number <= 0:
+            return Error('Invalid number of markers')
+
         # Make sure the output folder exists
         path = os.path.join(self._path, usage.str())
         if not os.path.exists(path):

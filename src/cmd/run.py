@@ -14,11 +14,9 @@ def execute(config_path: str):
         Path to the TOML config file
     '''
     # Load config
-    cfg: config.Config = None
-    try:
-        cfg = config.read(config_path)
-    except Exception as e:
-        click.echo(f'Failed to load config \'{config_path}\': {e}')
+    cfg, err = config.read(config_path)
+    if err != None:
+        click.echo(f'Failed to load config \'{config_path}\': {err}')
 
     # Create a new HTTP client which talks to the REST API
     c = client.Client(cfg)
