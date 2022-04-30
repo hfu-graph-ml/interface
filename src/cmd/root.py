@@ -1,5 +1,6 @@
 import click
 
+import cmd.track as track
 import cmd.gen as gen
 import cmd.run as run
 
@@ -23,6 +24,13 @@ def run_cmd(config_path: str):
     run.execute(config_path)
 
 
+@click.command('track')
+@click.option('-c', '--config', 'config_path', default='default.toml', help='Path to the TOML config file', type=str, show_default=True)
+def track_cmd(config_path: str):
+    track.execute(config_path)
+
+
+cli.add_command(track_cmd)
 cli.add_command(gen_cmd)
 cli.add_command(run_cmd)
 
