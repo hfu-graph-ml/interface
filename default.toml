@@ -4,6 +4,7 @@ port = 8000
 
 [tracker]
 path                  = ".markers"
+debug                 = false
 failed_read_threshold = 10
 uniques               = 50
 size                  = 5

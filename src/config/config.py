@@ -18,6 +18,7 @@ class BackendOptions(TypedDict):
 class TrackerOptions(TypedDict):
     failed_read_threshold: int
     uniques: int
+    debug: bool
     path: str
     size: int
 
