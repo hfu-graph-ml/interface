@@ -1,12 +1,17 @@
-from typing import Callable, List, TypeAlias
+from typing import Callable, List, Tuple, TypeAlias
 import cv2 as cv
+import threading
 import math
 
 import config.config as config
 import tracker.types as types
 import utils.wait as wait
 
-Callback: TypeAlias = Callable[[any, int, any], None]
+Corners: TypeAlias = List[List[List[int]]]
+CornerList: TypeAlias = Tuple[Corners, ...]
+IDList: TypeAlias = List[List[int]]
+
+Callback: TypeAlias = Callable[[CornerList, IDList], None]
 
 
 class Tracker:
@@ -28,17 +33,39 @@ class Tracker:
         self._dict = cv.aruco.Dictionary_get(t)
         self._type = t
 
-        # Event subscribers
+        # Event handling
         self._subscribers: List[Callback]
 
         # Misc
+        self._debug = cfg['debug']
         self._path = cfg['path']
-        self._threaded = False
+        self._running = False
+        self._thread = None
 
     def calibrate():
         pass
 
-    def run(self, camera_id: int, fps: int) -> types.Error:
+    def start(self, camera_id: int, fps: int) -> types.Error:
+        '''
+        Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
+
+        Parameters
+        ----------
+        camera_id : int
+            The camera ID (Usually 0)
+        fps : int
+            The time we wait between each frame
+
+        Returns
+        -------
+        err : types.Error
+            Non None if an error occured
+        '''
+        if self._running:
+            return types.Error('Already running')
+
+        self._running = True
+
         window_name = 'tracking'
         wait_delay = math.floor((1 / fps)*1000)
 
@@ -49,9 +76,10 @@ class Tracker:
         cap = cv.VideoCapture(camera_id)
 
         # Setup tracking preview window
-        cv.namedWindow(window_name)
+        if self._debug:
+            cv.namedWindow(window_name)
 
-        while True:
+        while self._running:
             if self._failed_reads >= self._failed_read_threshold:
                 return types.Error('Too many failed frame reads')
 
@@ -64,24 +92,54 @@ class Tracker:
 
             # Detect the markers
             corners, ids, rejected = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
-            # Next publish to all subscribers
-            print(corners, ids, rejected)
+            if len(corners) > 0:
+                self.notify(corners, ids)
 
             # Preview the frame
-            cv.imshow(window_name, frame)
+            if self._debug:
+                cv.imshow(window_name, frame)
 
             if wait.wait_or_exit(wait_delay):
                 break
 
         # Cleanup
         cap.release()
-        cv.destroyAllWindows()
 
-    def run_threaded():
-        pass
+        if self._debug:
+            cv.destroyAllWindows()
 
-    def subscribe():
+    def run_threaded(self, camera_id: int, fps: int) -> types.Error:
+        ''''''
+        if self._running:
+            return types.Error('Already running')
+
+        # Construct a new thread
+        t = threading.Thread(None, self.start, 'tracking-thread', (camera_id, fps))
+        self._thread = t
+        t.start()
+
+        return None
+
+    def stop(self):
+        ''''''
+        if not self._running:
+            return
+
+        self._running = False
+
+        if self._thread != None:
+            self._thread.join()
+
+    def notify(self, corners: CornerList, ids: IDList):
+        ''''''
+        for sub in self._subscribers:
+            sub(corners, ids)
+
+    def subscribe(self, func: Callback):
+        ''''''
+        self._subscribers.append(func)
         pass
 
     def unsubscribe():
+        ''''''
         pass
