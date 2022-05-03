@@ -23,7 +23,12 @@ class TrackerOptions(TypedDict):
     size: int
 
 
+class RendererOptions(TypedDict):
+    fps: int
+
+
 class Config(TypedDict):
+    renderer: RendererOptions
     backend: BackendOptions
     tracker: TrackerOptions
 
