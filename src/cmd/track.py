@@ -4,7 +4,7 @@ from tracker.tracker import Tracker
 import config.config as config
 
 
-def execute(config_path: str):
+def execute(config_path: str, camera_id: int):
     ''''''
     cfg, err = config.read(config_path)
     if err != None:
@@ -12,6 +12,10 @@ def execute(config_path: str):
         return
 
     t = Tracker(cfg['tracker'])
-    err = t.run(0, 60)
+    err = t.run_threaded(camera_id, 60)
     if err != None:
         click.echo(err.message)
+
+    click.echo('Tracking running...')
+
+    # TODO (Techassi): Handle interupts and call t.stop()
