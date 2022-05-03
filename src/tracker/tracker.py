@@ -1,17 +1,14 @@
-from typing import Callable, List, Tuple, TypeAlias
+from typing import List
+from queue import Queue
 import cv2 as cv
 import threading
 import math
 
 import config.config as config
-import tracker.types as types
+import tracker.aruco as aruco
 import utils.wait as wait
 
-Corners: TypeAlias = List[List[List[int]]]
-CornerList: TypeAlias = Tuple[Corners, ...]
-IDList: TypeAlias = List[List[int]]
-
-Callback: TypeAlias = Callable[[CornerList, IDList], None]
+from .types import CornerList, Subscription, TrackingError, IDList
 
 
 class Tracker:
@@ -20,8 +17,8 @@ class Tracker:
     '''
 
     def __init__(self, cfg: config.TrackerOptions) -> None:
-        typ = types.aruco_type_from(cfg['size'], cfg['uniques'])
-        t, ok = types.aruco_dict_from(typ)
+        typ = aruco.type_from(cfg['size'], cfg['uniques'])
+        t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Tracker object')
 
@@ -33,8 +30,8 @@ class Tracker:
         self._dict = cv.aruco.Dictionary_get(t)
         self._type = t
 
-        # Event handling
-        self._subscribers: List[Callback]
+        # Tracking handling
+        self._subscribers: List[Queue] = []
 
         # Misc
         self._debug = cfg['debug']
@@ -42,10 +39,7 @@ class Tracker:
         self._running = False
         self._thread = None
 
-    def calibrate():
-        pass
-
-    def start(self, camera_id: int, fps: int) -> types.Error:
+    def _start(self, camera_id: int, fps: int) -> TrackingError:
         '''
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
@@ -62,7 +56,7 @@ class Tracker:
             Non None if an error occured
         '''
         if self._running:
-            return types.Error('Already running')
+            return TrackingError('Already running')
 
         self._running = True
 
@@ -81,7 +75,7 @@ class Tracker:
 
         while self._running:
             if self._failed_reads >= self._failed_read_threshold:
-                return types.Error('Too many failed frame reads')
+                return TrackingError('Too many failed frame reads')
 
             ok, frame = cap.read()
             if not ok:
@@ -95,26 +89,30 @@ class Tracker:
             if len(corners) > 0:
                 self.notify(corners, ids)
 
-            # Preview the frame
-            if self._debug:
-                cv.imshow(window_name, frame)
-
-            if wait.wait_or_exit(wait_delay):
-                break
-
         # Cleanup
         cap.release()
 
-        if self._debug:
-            cv.destroyAllWindows()
+    def start(self, camera_id: int, fps: int) -> TrackingError:
+        '''
+        Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
-    def run_threaded(self, camera_id: int, fps: int) -> types.Error:
-        ''''''
+        Parameters
+        ----------
+        camera_id : int
+            The camera ID (Usually 0)
+        fps : int
+            The time we wait between each frame
+
+        Returns
+        -------
+        err : types.Error
+            Non None if an error occured
+        '''
         if self._running:
-            return types.Error('Already running')
+            return TrackingError('Already running')
 
         # Construct a new thread
-        t = threading.Thread(None, self.start, 'tracking-thread', (camera_id, fps))
+        t = threading.Thread(None, self._start, 'tracking-thread', (camera_id, fps))
         self._thread = t
         t.start()
 
@@ -126,20 +124,24 @@ class Tracker:
             return
 
         self._running = False
-
-        if self._thread != None:
-            self._thread.join()
+        self._thread.join()
 
     def notify(self, corners: CornerList, ids: IDList):
         ''''''
         for sub in self._subscribers:
-            sub(corners, ids)
+            sub.put((corners, ids))
 
-    def subscribe(self, func: Callback):
+    def subscribe(self) -> Subscription:
         ''''''
-        self._subscribers.append(func)
-        pass
+        q = Queue()
+        self._subscribers.append(q)
 
-    def unsubscribe():
+        return (len(self._subscribers) - 1, q.get)
+
+    def unsubscribe(self, index: int) -> TrackingError:
         ''''''
-        pass
+        if index < 0 or index > len(self._subscribers) - 1:
+            return TrackingError('Invalid index')
+
+        self._subscribers.pop(index)
+        return None

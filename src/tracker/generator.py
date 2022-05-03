@@ -1,10 +1,11 @@
 from enum import Enum, unique
-from typing import Tuple
 import numpy as np
 import cv2 as cv
 import os
 
-import tracker.types as types
+import tracker.aruco as aruco
+
+from .types import TrackingError
 
 
 @unique
@@ -22,8 +23,8 @@ class Generator:
     '''
 
     def __init__(self, size: int, uniq: int, path: str) -> None:
-        typ = types.aruco_type_from(size, uniq)
-        t, ok = types.aruco_dict_from(typ)
+        typ = aruco.type_from(size, uniq)
+        t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Generator object')
 
@@ -31,7 +32,7 @@ class Generator:
         self._path = path
         self._type = t
 
-    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> types.Error:
+    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> TrackingError:
         '''
         Generate a variable number of ArUco markers.
 
@@ -55,10 +56,10 @@ class Generator:
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return types.Error('Generator initialized with invalid ArUco type')
+            return TrackingError('Generator initialized with invalid ArUco type')
 
         if number <= 0:
-            return types.Error('Invalid number of markers')
+            return TrackingError('Invalid number of markers')
 
         # Make sure the output folder exists
         path = os.path.join(self._path, usage.str())
@@ -94,7 +95,7 @@ class Generator:
 
         return None
 
-    def generate_combined(self, number: int, res: int) -> types.Error:
+    def generate_combined(self, number: int, res: int) -> TrackingError:
         '''
         Generate calibration and node markers at the same time.
 
