@@ -26,9 +26,8 @@ def run_cmd(config_path: str):
 
 @click.command('track')
 @click.option('-c', '--config', 'config_path', default='default.toml', help='Path to the TOML config file', type=str, show_default=True)
-@click.option('-i', '--camera', default=0, help='Camera device ID', type=int, show_default=True)
-def track_cmd(config_path: str, camera: int):
-    track.execute(config_path, camera)
+def track_cmd(config_path: str):
+    track.execute(config_path)
 
 
 cli.add_command(track_cmd)

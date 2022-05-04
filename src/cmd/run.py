@@ -1,7 +1,9 @@
 import click
 
+from renderer.renderer import Renderer
+from tracker.tracker import Tracker
+
 import config.config as config
-import client.client as client
 
 
 def execute(config_path: str):
@@ -18,12 +20,19 @@ def execute(config_path: str):
     if err != None:
         click.echo(f'Failed to load config \'{config_path}\': {err}')
 
-    # Create a new HTTP client which talks to the REST API
-    c = client.Client(cfg)
-
-    graph, err = c.get_graph()
+    # Create tracker
+    t = Tracker(cfg['tracker'], cfg['capture'])
+    err = t.start()
     if err != None:
-        click.echo(f'Error: {err}')
-        return
+        click.echo(err.message)
 
-    click.echo(graph)
+    click.echo('Tracking running...')
+    click.echo('Start rendering...')
+
+    # Create renderer
+    r = Renderer(cfg['renderer'], t)
+    err = r.start()
+    if err != None:
+        click.echo(err.message)
+
+    # TODO (Techassi): Handle interupts and call t.stop()
