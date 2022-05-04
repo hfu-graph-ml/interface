@@ -3,11 +3,12 @@ host = "127.0.0.1"
 port = 8000
 
 [tracker]
-path                  = ".markers"
-debug                 = false
-failed_read_threshold = 10
-uniques               = 50
-size                  = 5
+max_failed_read = 10
+uniques         = 50
+debug           = false
+path            = ".markers"
+size            = 5
 
-[renderer]
-fps = 60
+[capture]
+camera_id = 0
+fps       = 60

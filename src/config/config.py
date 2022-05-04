@@ -16,21 +16,22 @@ class BackendOptions(TypedDict):
 
 
 class TrackerOptions(TypedDict):
-    failed_read_threshold: int
+    max_failed_read: int
     uniques: int
     debug: bool
     path: str
     size: int
 
 
-class RendererOptions(TypedDict):
+class CaptureOptions(TypedDict):
+    camera_id: int
     fps: int
 
 
 class Config(TypedDict):
-    renderer: RendererOptions
     backend: BackendOptions
     tracker: TrackerOptions
+    capture: CaptureOptions
 
 
 def read(path: str) -> Tuple[Config, Error]:
