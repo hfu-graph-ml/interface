@@ -18,7 +18,8 @@ This
 2. Activates the VENV. Enter `deactivate` in your shell to exit the VENV
 3. Install all required dependencies
 
-Run the application like:
+After copying the `default.toml` config file to `config.toml` and making any neccesarry adjustments, run the application
+like:
 
 ```shell
 python src/main.py <SUBCOMMAND>
