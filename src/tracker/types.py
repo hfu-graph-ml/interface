@@ -9,6 +9,6 @@ IDList: TypeAlias = List[List[int]]
 Subscription: TypeAlias = Tuple[int, Callable[[bool, float | None], any]]
 
 
-class TrackingError:
+class TrackerError:
     def __init__(self, message: str) -> None:
         self.message = message

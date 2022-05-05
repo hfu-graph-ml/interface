@@ -5,7 +5,7 @@ import os
 
 import tracker.aruco as aruco
 
-from .types import TrackingError
+from .types import TrackerError
 
 
 @unique
@@ -32,7 +32,7 @@ class Generator:
         self._path = path
         self._type = t
 
-    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> TrackingError:
+    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> TrackerError:
         '''
         Generate a variable number of ArUco markers.
 
@@ -56,10 +56,10 @@ class Generator:
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return TrackingError('Generator initialized with invalid ArUco type')
+            return TrackerError('Generator initialized with invalid ArUco type')
 
         if number <= 0:
-            return TrackingError('Invalid number of markers')
+            return TrackerError('Invalid number of markers')
 
         # Make sure the output folder exists
         path = os.path.join(self._path, usage.str())
@@ -95,7 +95,7 @@ class Generator:
 
         return None
 
-    def generate_combined(self, number: int, res: int) -> TrackingError:
+    def generate_combined(self, number: int, res: int) -> TrackerError:
         '''
         Generate calibration and node markers at the same time.
 

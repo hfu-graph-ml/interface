@@ -12,6 +12,10 @@ from .types import RendererError
 
 
 class Renderer:
+    '''
+    This class describes the renderer which renders the user interface.
+    '''
+
     def __init__(self, cfg: config.CaptureOptions, t: Tracker) -> None:
         self._subscription_id = -1
         self._fps = cfg['fps']
@@ -19,7 +23,9 @@ class Renderer:
         self._tracker = t
 
     def start(self) -> RendererError:
-        ''''''
+        '''
+        Start the render loop.
+        '''
         if self._running:
             return RendererError('Already running')
 
@@ -47,6 +53,8 @@ class Renderer:
         return None
 
     def stop(self):
-        ''''''
+        '''
+        Stop the render loop.
+        '''
         self._tracker.unsubscribe(self._subscription_id)
         self._running = False

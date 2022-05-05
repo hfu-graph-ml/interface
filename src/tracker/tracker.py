@@ -9,7 +9,7 @@ import config.config as config
 import tracker.aruco as aruco
 import utils.wait as wait
 
-from .types import CornerList, Subscription, TrackingError, IDList
+from .types import CornerList, Subscription, TrackerError, IDList
 
 
 class Tracker:
@@ -54,25 +54,27 @@ class Tracker:
             self._debug = True
 
     def _setup(self) -> Tuple[any, any, int]:
-        ''''''
+        '''
+        Setup ArUco detection params, capture device and wait delay.
+
+        Returns
+        -------
+        values : Tuple[any, any, int]
+            The capture device, ArUco detection params and wait delay
+        '''
         params = cv.aruco.DetectorParameters_create()
         delay = math.floor((1 / self._fps)*1000)
         cap = cv.VideoCapture(self._camera_id)
 
         return cap, params, delay
 
-    def _run(self) -> TrackingError:
+    def _run(self) -> TrackerError:
         '''
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
-        Parameters
-        ----------
-        camera_id : int
-            The camera ID (Usually 0)
-
         Returns
         -------
-        err : types.Error
+        err : TrackerError
             Non None if an error occured
         '''
         self._running = True
@@ -82,7 +84,7 @@ class Tracker:
 
         while self._running:
             if self._failed_reads >= self._max_failed_read:
-                return TrackingError('Too many failed frame reads')
+                return TrackerError('Too many failed frame reads')
 
             ok, frame = cap.read()
             if not ok:
@@ -99,8 +101,15 @@ class Tracker:
         # Cleanup
         cap.release()
 
-    def _run_debug(self) -> TrackingError:
-        ''''''
+    def _run_debug(self) -> TrackerError:
+        '''
+        Run in debug mode.
+
+        Returns
+        -------
+        err : TrackerError
+            Non None if an error occured
+        '''
         self._running = True
 
         # Setup video capture and ArUco detection params
@@ -126,24 +135,17 @@ class Tracker:
         cv.destroyAllWindows()
         cap.release()
 
-    def start(self) -> TrackingError:
+    def start(self) -> TrackerError:
         '''
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
-        Parameters
-        ----------
-        camera_id : int
-            The camera ID (Usually 0)
-        fps : int
-            The time we wait between each frame
-
         Returns
         -------
-        err : types.Error
+        err : TrackerError
             Non None if an error occured
         '''
         if self._running:
-            return TrackingError('Already running')
+            return TrackerError('Already running')
 
         if self._debug:
             return self._run_debug()
@@ -156,7 +158,9 @@ class Tracker:
         return None
 
     def stop(self):
-        ''''''
+        '''
+        Stop the tracker. This stops the tracking loop and joins the thread to wait until it terminates.
+        '''
         if not self._running:
             return
 
@@ -164,21 +168,49 @@ class Tracker:
         self._thread.join()
 
     def notify(self, corners: CornerList, ids: IDList):
-        ''''''
+        '''
+        Notify subscribers with detected markers.
+
+        Parameters
+        ----------
+        corners : CornerList
+            A list of detected corners
+        ids : IDList
+            A list of IDs
+        '''
         for sub in self._subscribers:
             sub.put((corners, ids))
 
     def subscribe(self) -> Subscription:
-        ''''''
+        '''
+        External consumers can subscribe to this tracker to get real-time marker positions.
+
+        Returns
+        -------
+        subscription : Subscription
+            A tuple with the subscription ID and the retrieve function
+        '''
         q = Queue()
         self._subscribers.append(q)
 
         return len(self._subscribers) - 1, q.get
 
-    def unsubscribe(self, index: int) -> TrackingError:
-        ''''''
+    def unsubscribe(self, index: int) -> TrackerError:
+        '''
+        External subscribers can unsubscribe from this tracker.
+
+        Parameters
+        ----------
+        index : int
+            The subscription ID
+
+        Returns
+        -------
+        err : TrackerError
+            Non None if an error occured
+        '''
         if index < 0 or index > len(self._subscribers) - 1:
-            return TrackingError('Invalid index')
+            return TrackerError('Invalid index')
 
         self._subscribers.pop(index)
         return None
