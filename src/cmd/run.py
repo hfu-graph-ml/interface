@@ -30,7 +30,7 @@ def execute(config_path: str):
     click.echo('Start rendering...')
 
     # Create renderer
-    r = Renderer(cfg['renderer'], t)
+    r = Renderer(cfg['capture'], t)
     err = r.start()
     if err != None:
         click.echo(err.message)
