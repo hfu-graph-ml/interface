@@ -2,6 +2,7 @@ from typing import List, Tuple
 from queue import Queue
 import cv2 as cv
 import threading
+import itertools
 import math
 
 from renderer.debug import DebugRenderer
@@ -17,37 +18,36 @@ class Tracker:
     This class describes a tracker which is able to track ArUco markers.
     '''
 
-    def __init__(
-        self,
-        tracker_options: config.TrackerOptions,
-        capture_options: config.CaptureOptions,
-        force_debug: bool = False
-    ) -> None:
-        typ = aruco.type_from(tracker_options['size'], tracker_options['uniques'])
+    def __init__(self, cfg: config.Config, force_debug: bool = False) -> None:
+        typ = aruco.type_from(cfg['tracker']['size'], cfg['tracker']['uniques'])
         t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Tracker object')
 
         # These values keep track how many frames failed to read
-        self._max_failed_read = tracker_options['max_failed_read']
+        self._max_failed_read = cfg['tracker']['max_failed_read']
         self._failed_reads = 0
 
         # ArUco marker related values
         self._dict = cv.aruco.Dictionary_get(t)
-        self._path = tracker_options['path']
+        self._path = cfg['tracker']['path']
         self._type = t
 
         # Tracking
-        self._camera_id = capture_options['camera_id']
+        self._camera_id = cfg['capture']['camera_id']
         self._subscribers: List[Queue] = []
-        self._fps = capture_options['fps']
+        self._fps = cfg['capture']['fps']
+
+        # Dimensions
+        self._frame_height = 0
+        self._frame_width = 0
 
         # Misc
         self._running = False
         self._thread = None
 
         # Debugging
-        self._debug = tracker_options['debug']
+        self._debug = cfg['tracker']['debug']
 
         # Check if the user forces debug
         if force_debug:
@@ -65,6 +65,10 @@ class Tracker:
         params = cv.aruco.DetectorParameters_create()
         delay = math.floor((1 / self._fps)*1000)
         cap = cv.VideoCapture(self._camera_id)
+
+        # Retrieve frame height and width
+        self._frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+        self._frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 
         return cap, params, delay
 
@@ -124,6 +128,7 @@ class Tracker:
             # Detect the markers
             corners, ids, rejected = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
             if len(corners) > 0:
+                ids = list(itertools.chain.from_iterable(ids))
                 debug_renderer.render(corners, ids, frame)
 
             cv.imshow('tracking-debug', frame)
@@ -178,6 +183,7 @@ class Tracker:
         ids : IDList
             A list of IDs
         '''
+        ids = list(itertools.chain.from_iterable(ids))
         for sub in self._subscribers:
             sub.put((corners, ids))
 
@@ -193,7 +199,7 @@ class Tracker:
         q = Queue()
         self._subscribers.append(q)
 
-        return len(self._subscribers) - 1, q.get
+        return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
 
     def unsubscribe(self, index: int) -> TrackerError:
         '''

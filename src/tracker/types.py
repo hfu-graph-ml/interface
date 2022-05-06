@@ -6,7 +6,8 @@ CornerList: TypeAlias = Tuple[Corners, ...]
 IDList: TypeAlias = List[List[int]]
 
 # Queue related types
-Subscription: TypeAlias = Tuple[int, Callable[[bool, float | None], any]]
+SubscriptionParams: TypeAlias = Tuple[int, int]
+Subscription: TypeAlias = Tuple[int, SubscriptionParams, Callable[[bool, float | None], Tuple[CornerList, IDList]]]
 
 
 class TrackerError:
