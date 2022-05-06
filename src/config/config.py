@@ -28,7 +28,13 @@ class CaptureOptions(TypedDict):
     fps: int
 
 
+class RendererOptions(TypedDict):
+    height: int
+    width: int
+
+
 class Config(TypedDict):
+    renderer: RendererOptions
     backend: BackendOptions
     tracker: TrackerOptions
     capture: CaptureOptions
