@@ -22,7 +22,7 @@ def execute(config_path: str):
     click.echo('Tracking running in debug mode...')
 
     # Create tracker, force debugging
-    t = Tracker(cfg['tracker'], cfg['capture'], True)
+    t = Tracker(cfg, True)
     err = t.start()
     if err != None:
         click.echo(err.message)

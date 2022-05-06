@@ -21,7 +21,7 @@ def execute(config_path: str):
         click.echo(f'Failed to load config \'{config_path}\': {err}')
 
     # Create tracker
-    t = Tracker(cfg['tracker'], cfg['capture'])
+    t = Tracker(cfg)
     err = t.start()
     if err != None:
         click.echo(err.message)
@@ -30,7 +30,7 @@ def execute(config_path: str):
     click.echo('Start rendering...')
 
     # Create renderer
-    r = Renderer(cfg['capture'], t)
+    r = Renderer(cfg, t)
     err = r.start()
     if err != None:
         click.echo(err.message)
