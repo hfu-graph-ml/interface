@@ -1,20 +1,11 @@
-from enum import Enum, unique
 import numpy as np
 import cv2 as cv
 import os
 
+import config.config as config
 import tracker.aruco as aruco
 
-from .types import TrackerError
-
-
-@unique
-class Usage(Enum):
-    CALIB = 0
-    NODES = 1
-
-    def str(self) -> str:
-        return ['calib', 'nodes'][self.value]
+from .types import GeneratorError
 
 
 class Generator:
@@ -22,17 +13,17 @@ class Generator:
     This class generates ArUco markers / tags.
     '''
 
-    def __init__(self, size: int, uniq: int, path: str) -> None:
-        typ = aruco.type_from(size, uniq)
+    def __init__(self, cfg: config.TrackerOptions) -> None:
+        typ = aruco.type_from(cfg['size'], cfg['uniques'])
         t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Generator object')
 
         self._dict = cv.aruco.Dictionary_get(t)
-        self._path = path
+        self._path = cfg['path']
         self._type = t
 
-    def generate(self, number: int, res: int, usage: Usage, start_id: int = 0) -> TrackerError:
+    def generate(self, number: int, res: int) -> GeneratorError:
         '''
         Generate a variable number of ArUco markers.
 
@@ -56,18 +47,18 @@ class Generator:
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return TrackerError('Generator initialized with invalid ArUco type')
+            return GeneratorError('Generator initialized with invalid ArUco type')
 
         if number <= 0:
-            return TrackerError('Invalid number of markers')
+            return GeneratorError('Invalid number of markers')
 
         # Make sure the output folder exists
-        path = os.path.join(self._path, usage.str())
+        path = os.path.join(self._path, 'markers')
         if not os.path.exists(path):
             os.makedirs(path)
 
         for i in range(0, number):
-            marker_name = 'marker-{:02d}.png'.format(start_id + i)
+            marker_name = 'marker-{:02d}.png'.format(i)
 
             # Create a X by Y sized empty 2D array to write the marker to
             marker = np.zeros((res, res, 1), dtype='uint8')
@@ -78,7 +69,7 @@ class Generator:
             # - The resolution, e.g. 300 x 300 pixels
             # - The array to write the marker into
             # - The number of border bits
-            cv.aruco.drawMarker(self._dict, start_id + i, res, marker, 1)
+            cv.aruco.drawMarker(self._dict, i, res, marker, 1)
 
             # Construct file path and save
             marker_path = os.path.join(path, marker_name)
@@ -95,26 +86,8 @@ class Generator:
 
         return None
 
-    def generate_combined(self, number: int, res: int) -> TrackerError:
-        '''
-        Generate calibration and node markers at the same time.
 
-        Parameters
-        ----------
-        number : int
-            Number of ArUco markers to generate
-        res : int
-            Resolution of the markers in pixels (e.g. 300x300)
-
-        Returns
-        -------
-        err : Error
-            None if no error occured
-        '''
-        # First generate calibration markers
-        err = self.generate(4, res, Usage.CALIB)
-        if err != None:
-            return err
-
-        # Generate node markers
-        return self.generate(number, res, Usage.NODES, 4)
+class BoardGenerator():
+    '''
+    This class generates ArUco chessboard patterns (ChArUco).
+    '''

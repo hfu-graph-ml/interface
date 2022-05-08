@@ -4,14 +4,14 @@ port = 8000
 
 [capture]
 camera_id = 0
-fps       = 60
+fps = 60
 
 [tracker]
 max_failed_read = 10
-uniques         = 50
-debug           = false
-path            = ".markers"
-size            = 5
+uniques = 50
+debug = false
+path = ".data"
+size = 5
 
 [renderer]
 height = 1080

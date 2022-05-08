@@ -13,3 +13,8 @@ Subscription: TypeAlias = Tuple[int, SubscriptionParams, Callable[[bool, float |
 class TrackerError:
     def __init__(self, message: str) -> None:
         self.message = message
+
+
+class GeneratorError:
+    def __init__(self, message: str) -> None:
+        self.message = message
