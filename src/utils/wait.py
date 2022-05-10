@@ -1,7 +1,7 @@
 import cv2 as cv
 
 
-def wait_or_exit(d: int, key: str = 'q') -> bool:
+def wait_or(d: int, key: str = 'q') -> bool:
     # Fallback to 16 ms => 60 FPS
     if d <= 0:
         d = 16
