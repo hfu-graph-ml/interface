@@ -1,6 +1,6 @@
 import click
 
-from tracker.generator import Generator
+from tracker.generator import BoardGenerator, Generator
 import config.config as config
 
 
@@ -24,7 +24,7 @@ def markers(config_path: str, number: int, res: int):
 
     gen = Generator(cfg['tracker'])
 
-    click.echo(f'Generating 4 corner and \'{number}\' node markers with {res}x{res} pixels')
+    click.echo(f'Generating 4 corner and \'{number - 4}\' node markers with {res}x{res} pixels')
 
     err = gen.generate(number, res)
     if err != None:
@@ -34,5 +34,20 @@ def markers(config_path: str, number: int, res: int):
     click.echo('Saved markers in \'{}\''.format(cfg['tracker']['path']))
 
 
-def board(config_path: str):
+def board(config_path: str, cols: int, rows: int, res_width: int, res_height: int):
     ''''''
+    cfg, err = config.read(config_path)
+    if err != None:
+        click.echo(f'Error while reading config: {err.message}')
+        return
+
+    gen = BoardGenerator(cfg['tracker'])
+
+    click.echo('Generating ChArUco board')
+
+    err = gen.generate(cols, rows, res_width, res_height)
+    if err != None:
+        click.echo(f'Error while generating markers: {err.message}')
+        return
+
+    click.echo('Saved board in \'{}\''.format(cfg['tracker']['path']))

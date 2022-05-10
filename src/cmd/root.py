@@ -24,9 +24,13 @@ def gen_markers(config_path: str, number: int, res: int):
 
 
 @gen_group.command('board')
-@click.option('-c', '--config', 'config_path', default='default.toml', help='Path to the TOML config file', type=str, show_default=True)
-def gen_board(config_path: str):
-    gen.board(config_path)
+@click.option('-p', '--path', 'config_path', default='default.toml', help='Path to the TOML config file', type=str, show_default=True)
+@click.option('-c', '--cols', default=7, help='Number of board columns', type=int, show_default=True)
+@click.option('-r', '--rows', default=5, help='Number of board rows', type=int, show_default=True)
+@click.option('-w', '--width', default=1920, help='Width of board in pixels', type=int, show_default=True)
+@click.option('-h', '--height', default=1080, help='Height of board in pixels', type=int, show_default=True)
+def gen_board(config_path: str, cols: int, rows: int, width, height):
+    gen.board(config_path, cols, rows, width, height)
 
 
 @cli.command('run')
