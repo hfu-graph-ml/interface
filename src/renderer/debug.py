@@ -29,5 +29,5 @@ class DebugRenderer(Shared):
             if len(corners_per_marker[0]) != 4:
                 continue
 
-            self._draw_center_point(corners_per_marker[0], ids[i], frame)
             self._draw_borders(corners_per_marker[0], frame)
+            self._draw_center_point(corners_per_marker[0], ids[i], frame)
