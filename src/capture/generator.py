@@ -3,7 +3,7 @@ import cv2 as cv
 import os
 
 import config.config as config
-import tracker.aruco as aruco
+import capture.aruco as aruco
 
 from .types import GeneratorError
 
@@ -13,14 +13,17 @@ class Generator:
     This class generates ArUco markers / tags.
     '''
 
-    def __init__(self, cfg: config.TrackerOptions) -> None:
-        typ = aruco.type_from(cfg['size'], cfg['uniques'])
+    def __init__(self, cfg: config.Config) -> None:
+        typ = aruco.type_from(
+            cfg['capture']['aruco']['size'],
+            cfg['capture']['aruco']['uniques']
+        )
         t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Generator object')
 
         self._dict = cv.aruco.Dictionary_get(t)
-        self._path = cfg['path']
+        self._path = cfg['capture']['path']
         self._type = t
 
     def generate(self, number: int, res: int) -> GeneratorError:
@@ -92,14 +95,17 @@ class BoardGenerator():
     This class generates ArUco chessboard patterns (ChArUco).
     '''
 
-    def __init__(self, cfg: config.TrackerOptions) -> None:
-        typ = aruco.type_from(cfg['size'], cfg['uniques'])
+    def __init__(self, cfg: config.Config) -> None:
+        typ = aruco.type_from(
+            cfg['capture']['aruco']['size'],
+            cfg['capture']['aruco']['uniques']
+        )
         t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Generator object')
 
         self._dict = cv.aruco.Dictionary_get(t)
-        self._path = cfg['path']
+        self._path = cfg['capture']['path']
         self._type = t
 
     def generate(self, cols: int, rows: int, res_width: int, res_height: int) -> GeneratorError:

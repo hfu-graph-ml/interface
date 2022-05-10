@@ -1,7 +1,6 @@
 import click
 
-from renderer.renderer import Renderer
-from tracker.tracker import Tracker
+from capture.tracker import Tracker
 import config.config as config
 
 

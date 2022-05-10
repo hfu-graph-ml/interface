@@ -7,10 +7,10 @@ import math
 
 from renderer.debug import DebugRenderer
 import config.config as config
-import tracker.aruco as aruco
+import capture.aruco as aruco
 import utils.wait as wait
 
-from .types import CornerList, Subscription, TrackerError, IDList
+from .types import CornerList, Subscription, GeneratorError, IDList
 
 
 class Tracker:
@@ -19,18 +19,21 @@ class Tracker:
     '''
 
     def __init__(self, cfg: config.Config, force_debug: bool = False) -> None:
-        typ = aruco.type_from(cfg['tracker']['size'], cfg['tracker']['uniques'])
+        typ = aruco.type_from(
+            cfg['capture']['aruco']['size'],
+            cfg['capture']['aruco']['uniques']
+        )
         t, ok = aruco.dict_from(typ)
         if not ok:
             raise Exception('Failed to instantiate Tracker object')
 
         # These values keep track how many frames failed to read
-        self._max_failed_read = cfg['tracker']['max_failed_read']
+        self._max_failed_read = cfg['capture']['tracker']['max_failed_read']
         self._failed_reads = 0
 
         # ArUco marker related values
         self._dict = cv.aruco.Dictionary_get(t)
-        self._path = cfg['tracker']['path']
+        self._path = cfg['capture']['path']
         self._type = t
 
         # Tracking
@@ -47,7 +50,7 @@ class Tracker:
         self._thread = None
 
         # Debugging
-        self._debug = cfg['tracker']['debug']
+        self._debug = cfg['capture']['tracker']['debug']
 
         # Check if the user forces debug
         if force_debug:
@@ -72,7 +75,7 @@ class Tracker:
 
         return cap, params, delay
 
-    def _run(self) -> TrackerError:
+    def _run(self) -> GeneratorError:
         '''
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
@@ -88,7 +91,7 @@ class Tracker:
 
         while self._running:
             if self._failed_reads >= self._max_failed_read:
-                return TrackerError('Too many failed frame reads')
+                return GeneratorError('Too many failed frame reads')
 
             ok, frame = cap.read()
             if not ok:
@@ -105,7 +108,7 @@ class Tracker:
         # Cleanup
         cap.release()
 
-    def _run_debug(self) -> TrackerError:
+    def _run_debug(self) -> GeneratorError:
         '''
         Run in debug mode.
 
@@ -133,14 +136,14 @@ class Tracker:
 
             cv.imshow('tracking-debug', frame)
 
-            if wait.wait_or_exit(delay):
+            if wait.wait_or(delay):
                 break
 
         # Cleanup
         cv.destroyAllWindows()
         cap.release()
 
-    def start(self) -> TrackerError:
+    def start(self) -> GeneratorError:
         '''
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
@@ -150,7 +153,7 @@ class Tracker:
             Non None if an error occured
         '''
         if self._running:
-            return TrackerError('Already running')
+            return GeneratorError('Already running')
 
         if self._debug:
             return self._run_debug()
@@ -201,7 +204,7 @@ class Tracker:
 
         return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
 
-    def unsubscribe(self, index: int) -> TrackerError:
+    def unsubscribe(self, index: int) -> GeneratorError:
         '''
         External subscribers can unsubscribe from this tracker.
 
@@ -216,7 +219,7 @@ class Tracker:
             Non None if an error occured
         '''
         if index < 0 or index > len(self._subscribers) - 1:
-            return TrackerError('Invalid index')
+            return GeneratorError('Invalid index')
 
         self._subscribers.pop(index)
         return None

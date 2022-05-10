@@ -1,6 +1,6 @@
 import click
 
-from tracker.generator import BoardGenerator, Generator
+from capture.generator import BoardGenerator, Generator
 import config.config as config
 
 
@@ -22,7 +22,7 @@ def markers(config_path: str, number: int, res: int):
         click.echo(f'Error while reading config: {err.message}')
         return
 
-    gen = Generator(cfg['tracker'])
+    gen = Generator(cfg)
 
     click.echo(f'Generating 4 corner and \'{number - 4}\' node markers with {res}x{res} pixels')
 
@@ -31,7 +31,7 @@ def markers(config_path: str, number: int, res: int):
         click.echo(f'Error while generating markers: {err.message}')
         return
 
-    click.echo('Saved markers in \'{}\''.format(cfg['tracker']['path']))
+    click.echo('Saved markers in \'{}\''.format(cfg['capture']['path']))
 
 
 def board(config_path: str, cols: int, rows: int, res_width: int, res_height: int):
@@ -41,7 +41,7 @@ def board(config_path: str, cols: int, rows: int, res_width: int, res_height: in
         click.echo(f'Error while reading config: {err.message}')
         return
 
-    gen = BoardGenerator(cfg['tracker'])
+    gen = BoardGenerator(cfg)
 
     click.echo('Generating ChArUco board')
 
@@ -50,4 +50,4 @@ def board(config_path: str, cols: int, rows: int, res_width: int, res_height: in
         click.echo(f'Error while generating markers: {err.message}')
         return
 
-    click.echo('Saved board in \'{}\''.format(cfg['tracker']['path']))
+    click.echo('Saved board in \'{}\''.format(cfg['capture']['path']))
