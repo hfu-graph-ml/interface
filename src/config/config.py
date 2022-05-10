@@ -2,6 +2,11 @@ from typing import Tuple, TypedDict
 import toml
 import os
 
+import utils.checks as checks
+
+ARUCO_ALLOWED_UNIQUES = [50, 100, 250, 1000]
+ARUCO_ALLOWED_SIZES = [4, 5, 6, 7]
+
 # NOTE (Techassi): Maybe move this generic error class into models
 
 
@@ -17,14 +22,27 @@ class BackendOptions(TypedDict):
 
 class TrackerOptions(TypedDict):
     max_failed_read: int
-    uniques: int
     debug: bool
-    path: str
+
+
+class CalibrationOptions(TypedDict):
+    height: int
+    width: int
+    cols: int
+    rows: int
+
+
+class ArUcoOtions(TypedDict):
+    uniques: int
     size: int
 
 
 class CaptureOptions(TypedDict):
+    calibration: CalibrationOptions
+    tracker: TrackerOptions
+    aruco: ArUcoOtions
     camera_id: int
+    path: str
     fps: int
 
 
@@ -36,11 +54,10 @@ class RendererOptions(TypedDict):
 class Config(TypedDict):
     renderer: RendererOptions
     backend: BackendOptions
-    tracker: TrackerOptions
     capture: CaptureOptions
 
 
-def read(path: str) -> Tuple[Config, Error]:
+def read(path: str, auto_validate: bool = False) -> Tuple[Config, Error]:
     '''
     Read a TOML file at 'path' and return a new Config class.
 
@@ -48,11 +65,13 @@ def read(path: str) -> Tuple[Config, Error]:
     ----------
     path : str
         Path to the TOML config file
+    auto_validate : bool
+        If this config should be auto validated
 
     Returns
     -------
-    config : Config
-        The decoded config
+    config : Tuple[Config, Error]
+        The decoded config or err when error occured
     '''
     if not path:
         return None, Error('Invalid/empty path')
@@ -62,6 +81,66 @@ def read(path: str) -> Tuple[Config, Error]:
 
     try:
         config = toml.load(path, Config)
-        return config, None
+
+        if not auto_validate:
+            return config, None
+
+        return config, validate(config)
     except toml.TomlDecodeError:
         return None, Error('TOML decode error')
+
+
+def validate(cfg: Config) -> Error:
+    '''
+    Validate config values. Returns an error if validation failed.
+
+    Parameters
+    ----------
+    cfg : Config
+        Config to validate
+
+    Returns
+    -------
+    err : Error
+        Non None if validation failed
+    '''
+    if not cfg['backend']['host']:
+        return Error('Invalid host')
+
+    if cfg['backend']['port'] < 0 or cfg['backend']['port'] > 65535:
+        return Error('Invalid port')
+
+    if cfg['capture']['camera_id'] < 0:
+        return Error('Invalid camera device ID')
+
+    if cfg['capture']['fps'] < 0:
+        return Error('Invalid FPS')
+
+    if not checks.is_in(cfg['capture']['aruco']['uniques'], ARUCO_ALLOWED_UNIQUES):
+        return Error(f'Invalid ArUco uniques number. Allowed are: {ARUCO_ALLOWED_UNIQUES}')
+
+    if not checks.is_in(cfg['capture']['aruco']['size'], ARUCO_ALLOWED_SIZES):
+        return Error(f'Invalid ArUco size. Allowed are: {ARUCO_ALLOWED_SIZES}')
+
+    if cfg['capture']['tracker']['max_failed_read'] < 0:
+        return Error('Invalid max failed read amount')
+
+    if cfg['capture']['calibration']['height'] < 0:
+        return Error('Invalid calibration board height')
+
+    if cfg['capture']['calibration']['width'] < 0:
+        return Error('Invalid calibration board width')
+
+    if cfg['capture']['calibration']['rows'] < 0:
+        return Error('Invalid calibration board row count')
+
+    if cfg['capture']['calibration']['cols'] < 0:
+        return Error('Invalid calibration board col count')
+
+    if cfg['renderer']['height'] < 0:
+        return Error('Invalid renderer height')
+
+    if cfg['renderer']['width'] < 0:
+        return Error('Invalid renderer width')
+
+    return None

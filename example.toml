@@ -1,0 +1,26 @@
+[backend]
+host = "127.0.0.1"
+port = 8000
+
+[capture]
+path = ".data"
+camera_id = 10
+fps = 60
+
+  [capture.aruco]
+  uniques = 50
+  size = 5
+
+  [capture.tracker]
+  max_failed_read = 10
+  debug = false
+
+  [capture.calibration]
+  height = 1080
+  width = 1920
+  rows = 5
+  size = 5
+
+[renderer]
+height = 1080
+width = 1920
