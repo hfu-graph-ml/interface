@@ -24,3 +24,26 @@ like:
 ```shell
 python src/main.py <SUBCOMMAND>
 ```
+
+## Usage
+
+### Debug Tracking
+
+The `track` command allows to debug the ArUco tracking process. It uses the debug renderer which runs in the same thread
+as the tracker.
+
+```shell
+python src/main.py track
+```
+
+### Marker Generation
+
+```shell
+python src/main.py gen markers
+```
+
+### Board Generation
+
+```shell
+python src/main.py gen board
+```
