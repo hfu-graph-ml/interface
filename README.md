@@ -2,7 +2,7 @@
 
 ## Developer Setup
 
-It is highly recommended to develop this project inside a ython virtual environment (VENV). To get started run the
+It is highly recommended to develop this project inside a python virtual environment (VENV). To get started run the
 following commands in your favourite shell (on Linux). For further infos how the setup a VENV on Windows see
 [here](https://docs.python.org/3/library/venv.html#creating-virtual-environments).
 
