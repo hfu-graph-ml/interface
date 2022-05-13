@@ -13,7 +13,7 @@ def execute(config_path: str):
     config_path : str
         Path to the TOML config file
     '''
-    cfg, err = config.read(config_path)
+    cfg, err = config.read(config_path, True)
     if err != None:
         click.echo(f'Error while reading config: {err.message}')
         return
