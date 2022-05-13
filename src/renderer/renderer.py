@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 
-from tracker.tracker import Tracker
+from capture.tracker import Tracker
 import config.config as config
 import utils.colors as colors
 import utils.wait as wait
@@ -32,9 +32,10 @@ class Renderer(Shared):
 
         # Scaling
         self._scaling_factor = 1
+        self._calib_markers = [0, 1, 2, 3]
 
-    def _calibrate():
-        ''''''
+    def _draw_node():
+        pass
 
     def start(self) -> RendererError:
         '''
@@ -52,18 +53,22 @@ class Renderer(Shared):
 
         # Subscribe to the tracker
         id, params, retrieve = self._tracker.subscribe()
+        self._camera_frame_height = params[1]
+        self._camera_frame_width = params[0]
         self._subscription_id = id
 
-        while self._running:
-            frame = np.zeros((self._frame_height, self._frame_width, 3))
+        # White frame sized width x height
+        initial_frame = 255 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
+        frame = np.copy(initial_frame)
 
+        while self._running:
             try:
                 corners, ids = retrieve(False)
 
-                for i, corners_per_marker in enumerate(corners):
-                    if len(corners_per_marker[0]) != 4:
-                        continue
+                # Copy the frame here. This reduces flickering
+                frame = np.copy(initial_frame)
 
+                for i, corners_per_marker in enumerate(corners):
                     self._draw_center_point(corners_per_marker[0], ids[i], frame)
             except:
                 pass
