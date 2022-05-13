@@ -26,6 +26,7 @@ class TrackerOptions(TypedDict):
 
 
 class CalibrationOptions(TypedDict):
+    number_images: int
     height: int
     width: int
     cols: int
