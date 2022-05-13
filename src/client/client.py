@@ -124,7 +124,7 @@ class Client:
 
         Returns
         -------
-        res : BaseRespponse
+        res : BaseResponse
             A response indicating the success
         '''
         if not data:
