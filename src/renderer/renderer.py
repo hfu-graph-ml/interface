@@ -1,11 +1,11 @@
 import numpy as np
 import cv2 as cv
-import math
 
 from tracker.tracker import Tracker
 import config.config as config
 import utils.colors as colors
 import utils.wait as wait
+import utils.fmt as fmt
 
 from .types import RendererError
 from .shared import Shared
@@ -45,7 +45,7 @@ class Renderer(Shared):
 
         self._running = True
 
-        wait_delay = math.floor((1 / self._fps)*1000)
+        wait_delay = fmt.fps_to_ms(self._fps)
 
         window_name = 'rendering'
         cv.namedWindow(window_name)
@@ -70,7 +70,7 @@ class Renderer(Shared):
 
             cv.imshow(window_name, frame)
 
-            if wait.wait_or_exit(wait_delay):
+            if wait.wait_or(wait_delay):
                 break
 
         # Cleanup

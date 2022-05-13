@@ -3,12 +3,12 @@ from queue import Queue
 import cv2 as cv
 import threading
 import itertools
-import math
 
 from renderer.debug import DebugRenderer
 import config.config as config
 import capture.aruco as aruco
 import utils.wait as wait
+import utils.fmt as fmt
 
 from .types import CornerList, Subscription, GeneratorError, IDList
 
@@ -37,9 +37,9 @@ class Tracker:
         self._type = t
 
         # Tracking
+        self._delay = fmt.fps_to_ms(cfg['capture']['fps'])
         self._camera_id = cfg['capture']['camera_id']
         self._subscribers: List[Queue] = []
-        self._fps = cfg['capture']['fps']
 
         # Dimensions
         self._frame_height = 0
@@ -56,7 +56,7 @@ class Tracker:
         if force_debug:
             self._debug = True
 
-    def _setup(self) -> Tuple[any, any, int]:
+    def _setup(self) -> Tuple[any, any]:
         '''
         Setup ArUco detection params, capture device and wait delay.
 
@@ -66,14 +66,13 @@ class Tracker:
             The capture device, ArUco detection params and wait delay
         '''
         params = cv.aruco.DetectorParameters_create()
-        delay = math.floor((1 / self._fps)*1000)
         cap = cv.VideoCapture(self._camera_id)
 
         # Retrieve frame height and width
         self._frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
         self._frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 
-        return cap, params, delay
+        return cap, params
 
     def _run(self) -> GeneratorError:
         '''
@@ -87,7 +86,7 @@ class Tracker:
         self._running = True
 
         # Setup video capture and ArUco detection params
-        cap, params, _ = self._setup()
+        cap, params = self._setup()
 
         while self._running:
             if self._failed_reads >= self._max_failed_read:
@@ -120,7 +119,7 @@ class Tracker:
         self._running = True
 
         # Setup video capture and ArUco detection params
-        cap, params, delay = self._setup()
+        cap, params = self._setup()
         debug_renderer = DebugRenderer()
 
         while self._running:
@@ -136,7 +135,7 @@ class Tracker:
 
             cv.imshow('tracking-debug', frame)
 
-            if wait.wait_or(delay):
+            if wait.wait_or(self._delay):
                 break
 
         # Cleanup

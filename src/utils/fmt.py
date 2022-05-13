@@ -1,3 +1,6 @@
+import math
+
+
 def host_port_from(host: str, port: int, secure: bool = False) -> str:
     '''
     Creates a http(s)://<host>:<port> string.
@@ -50,3 +53,7 @@ def url_from(base: str, paths: tuple) -> str:
         url = '/'.join([url, p.lower()])
 
     return url
+
+
+def fps_to_ms(fps: int) -> int:
+    return math.floor((1 / fps) * 1000)
