@@ -21,6 +21,7 @@ fps = 60
   width = 1920
   rows = 5
   size = 5
+  cols = 3
 
 [renderer]
 height = 1080
