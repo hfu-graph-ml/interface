@@ -3,11 +3,10 @@ import cv2 as cv
 
 from capture.tracker import Tracker
 import config.config as config
-import utils.colors as colors
 import utils.wait as wait
 import utils.fmt as fmt
 
-from .types import RendererError
+from typings.renderer import RendererError
 from .shared import Shared
 
 

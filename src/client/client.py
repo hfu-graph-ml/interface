@@ -7,8 +7,8 @@ import config.config as config
 import utils.fmt as fmt
 
 # Local typing imports
-from .types import BaseResponse, GraphResponse, RequestResult, Error
-from models.graph import Graph
+from typings.client import BaseResponse, GraphResponse, RequestResult, Error
+from typings.graph import Graph
 
 
 class Client:

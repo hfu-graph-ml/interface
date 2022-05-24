@@ -1,6 +1,6 @@
 from typing import Literal, TypedDict
 
-from models.graph import Graph
+from typings.graph import Graph
 
 Status = Literal['success', 'error']
 

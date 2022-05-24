@@ -5,7 +5,7 @@ import os
 import config.config as config
 import capture.aruco as aruco
 
-from .types import GeneratorError
+from typings.capture import GeneratorError
 
 
 class Generator:

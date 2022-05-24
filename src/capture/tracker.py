@@ -10,7 +10,16 @@ import capture.aruco as aruco
 import utils.wait as wait
 import utils.fmt as fmt
 
-from .types import CornerList, Subscription, GeneratorError, IDList
+from typings.capture import (
+    MarkerBordersList,
+    MarkerCenterList,
+    GeneratorError,
+    Subscription,
+    TrackerError,
+    CornerList,
+    Corners,
+    IDList,
+)
 
 
 class Tracker:
