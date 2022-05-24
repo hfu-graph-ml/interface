@@ -8,7 +8,7 @@ class DebugRenderer(Shared):
     This class decribes a debug renderer used to draw tracking information for debug purposes.
     '''
 
-    def render(self, corners: list, ids: list, frame: any):
+    def render(self, markers: MarkerBordersList, frame: any):
         '''
         Render the detected markers (corners) in the 'frame'.
 
@@ -27,9 +27,6 @@ class DebugRenderer(Shared):
         # 3. A list with two elements: the X and Y position of one corner
 
         # We access corners[0] as we are only interested in the list of corners
-        for i, corners_per_marker in enumerate(corners):
-            if len(corners_per_marker[0]) != 4:
-                continue
-
-            self._draw_borders(corners_per_marker[0], frame)
-            self._draw_center_point(corners_per_marker[0], ids[i], frame)
+        for marker in markers:
+            self._draw_borders(marker[0], frame)
+            self._draw_center_point(marker[1], marker[3], frame)

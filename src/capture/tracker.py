@@ -83,7 +83,63 @@ class Tracker:
 
         return cap, params
 
-    def _run(self) -> GeneratorError:
+    def _transform_markers_to_center(self, corner_list: CornerList, ids: IDList) -> MarkerCenterList:
+        '''
+        This functions transforms the list or corners and the list of IDs into a combined list of tuples consisting
+        of the center position <x,y>, the rotation angle and the ID.
+
+        Parameters
+        ----------
+        corner_list : CornerList
+            A lsit of corners
+        ids : IDList
+            A list of IDs
+
+        Returns
+        -------
+        marker_list : MarkerCenterList
+            A list of markers
+        '''
+        marker_list: MarkerCenterList = []
+        for i, corners_per_marker in enumerate(corner_list):
+            if len(corners_per_marker[0]) != 4:
+                continue
+
+            pos = self._extract_center_position(corners_per_marker[0])
+            marker_list.append((pos, 0.0, ids[i][0]))
+
+        return marker_list
+
+    def _transform_markers_to_borders(self, corner_list: CornerList, ids: IDList) -> MarkerBordersList:
+        ''''''
+        marker_list: MarkerBordersList = []
+        for i, corners_per_marker in enumerate(corner_list):
+            if len(corners_per_marker[0]) != 4:
+                continue
+
+            center = self._extract_center_position(corners_per_marker[0])
+            borders = self._extract_borders(corners_per_marker[0])
+            marker_list.append((borders, center, 0.0, ids[i][0]))
+
+        return marker_list
+
+    def _extract_center_position(self, corners: Corners) -> Tuple[int, int]:
+        ''''''
+        center_x = int((corners[0][0] + corners[2][0]) / 2)
+        center_y = int((corners[0][1] + corners[2][1]) / 2)
+
+        return center_x, center_y
+
+    def _extract_borders(
+        self,
+        corners: Corners
+    ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+        ''''''
+        (tl, tr, br, bl) = corners
+        # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
+        return (int(tl[0]), int(tl[1])), (int(tr[0]), int(tr[1])), (int(br[0]), int(br[1])), (int(bl[0]), int(bl[1]))
+
+    def _run(self) -> TrackerError:
         '''
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
@@ -111,6 +167,7 @@ class Tracker:
             # Detect the markers
             corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
             if len(corners) > 0:
+                marker = self._transform_markers_to_center(corners, ids)
                 self.notify(corners, ids)
 
         # Cleanup
@@ -139,8 +196,8 @@ class Tracker:
             # Detect the markers
             corners, ids, rejected = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
             if len(corners) > 0:
-                ids = list(itertools.chain.from_iterable(ids))
-                debug_renderer.render(corners, ids, frame)
+                markers = self._transform_markers_to_borders(corners, ids)
+                debug_renderer.render(markers, frame)
 
             cv.imshow('tracking-debug', frame)
 
