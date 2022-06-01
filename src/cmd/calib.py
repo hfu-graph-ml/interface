@@ -12,4 +12,4 @@ def execute(config_path: str):
         return
 
     c = calib.Calibration(cfg)
-    c.calibrate_manual()
+    c.calibrate_auto()

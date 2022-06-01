@@ -1,11 +1,14 @@
+from typing import Tuple
 import cv2 as cv
 import click
+import math
 import time
 import os
 
+from typings.capture import CalibrationError, CharucoCalibrationResult
+
 import config.config as config
-import utils.wait as wait
-import utils.fmt as fmt
+import capture.aruco as aruco
 
 
 class Calibration:
@@ -15,17 +18,41 @@ class Calibration:
     '''
 
     def __init__(self, cfg: config.Config) -> None:
-        self._number_images = cfg['capture']['calibration']['number_images']
-        self._delay = fmt.fps_to_ms(cfg['capture']['fps'])
-        self._camera_id = cfg['capture']['camera_id']
-        self._path = cfg['capture']['path']
+        typ = aruco.type_from(
+            cfg['capture']['aruco']['size'],
+            cfg['capture']['aruco']['uniques']
+        )
+        t, ok = aruco.dict_from(typ)
+        if not ok:
+            raise Exception('Failed to instantiate Generator object')
+
+        self._dict = cv.aruco.Dictionary_get(t)
+
+        cols = cfg['capture']['calibration']['cols'] + 1
+        rows = cfg['capture']['calibration']['rows'] + 1
+
+        # Create ChArUco board
+        self._board = cv.aruco.CharucoBoard_create(
+            cols,
+            rows,
+            0.04,
+            0.02,
+            self._dict
+        )
+
+        self._min_response = math.floor(((cols * rows) / 2) * 0.8)
+        self._cfg = cfg['capture']
+
+        self._image_size = None
+        self._corners = []
         self._frames = []
+        self._ids = []
 
     def _save_images(self):
         '''
         Save the stored frames as images.
         '''
-        save_path = os.path.join(self._path, 'images')
+        save_path = os.path.join(self._cfg['path'], 'images')
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
@@ -34,61 +61,107 @@ class Calibration:
             img_path = os.path.join(save_path, img_name)
             cv.imwrite(img_path, frame)
 
-    def _capture(self):
+    def _capture(self, grayscale: bool = False) -> CalibrationError:
         '''
         Capture images from camera and save them afterwards.
+
+        Parameters
+        ----------
+        grayscale : bool
+            If the captured images should be grayscaled
+
+        Returns
+        -------
+        err : CalibrationError
+            Returns CalibrationError if an error was encountered, None if otherwise
         '''
-        cap = cv.VideoCapture(self._camera_id)
+        cap = cv.VideoCapture(self._cfg['camera_id'])
 
         n = 0
-        while n < self._number_images:
+        while n < self._cfg['calibration']['number_images']:
             ok, frame = cap.read()
             if not ok:
-                click.echo('Failed to read the frame')
-                break
+                return CalibrationError('Failed to read the frame')
+
+            if grayscale:
+                frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
             self._frames.append(frame)
             n += 1
-            time.sleep(0.5)
+
+            time.sleep(self._cfg['calibration']['interval'])
 
         cap.release()
-        self._save_images()
+        return None
 
-    def _capture_manual(self):
+    def _detect(self) -> CalibrationError:
         '''
-        Capture images from camera and save them afterwards. This function waits for user input.
+        Detect markers and interpolate the ChArUco board corners.
+
+        Returns
+        -------
+        err : CalibrationError
+            Returns CalibrationError if an error was encountered, None if otherwise
         '''
-        window_name = 'calibration-preview'
-        cap = cv.VideoCapture(self._camera_id)
-        cv.namedWindow(window_name)
+        for frame in self._frames:
+            # First detect ArUco markers in the current frame
+            corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict)
 
-        n = 0
-        while n < self._number_images:
-            ok, frame = cap.read()
-            if not ok:
-                click.echo('Failed to read the frame')
-                break
+            # Get the ChArUco board corners based on the previously detected markers
+            response, charuco_corners, charuco_ids = cv.aruco.interpolateCornersCharuco(
+                corners,
+                ids,
+                frame,
+                self._board
+            )
 
-            cv.imshow(window_name, frame)
+            # If we found at least 80 percent of the total markers we store the ChArUco corners and IDs
+            if response > self._min_response:
+                self._corners.append(charuco_corners)
+                self._ids.append(charuco_ids)
 
-            i = wait.multi_wait_or(self._delay, 'q', 'n')
-            if i == -1:
-                continue
+                self._image_size = frame.shape[::-1]
+                return None
+                # TODO (Techassi): Add option to preview the image used and draw the detected markers
 
-            if i == 1:
-                self._frames.append(frame)
-                n += 1
-                continue
+        return CalibrationError('Failed to detect markers in any of the captured frames')
 
-            break
+    def _calibrate(self) -> CharucoCalibrationResult:
+        '''
+        Calibrate the camera based on the detected ChArUco board.
 
-        cv.destroyAllWindows()
-        cap.release()
-        self._save_images()
+        Returns
+        -------
+        result : CharucoCalibrationResult
+            A tuple consisting of the camera matrix, distortion coefficients, rotation and tranlation vectors
+        '''
+        # Extract the camera matrix and distortion coefficients
+        _, cameraMatrix, distCoeffs, rvecs, tvecs = cv.aruco.calibrateCameraCharuco(
+            self._corners,
+            self._ids,
+            self._board,
+            self._image_size,
+            cameraMatrix=None,
+            distCoeffs=None
+        )
 
-    def calibrate_auto(self):
-        ''''''
-        self._capture()
+        return (cameraMatrix, distCoeffs, rvecs, tvecs)
+
+    def calibrate_auto(self) -> Tuple[CharucoCalibrationResult, CalibrationError]:
+        '''
+        Automatically calibrate the camera and projector setup.
+        '''
+        # First capture a set of frames from the capture device (camera)
+        err = self._capture(True)
+        if err != None:
+            return None, err
+
+        # Next detect ArUco markers and ChArUco board
+        err = self._detect()
+        if err != None:
+            return None, err
+
+        return self._calibrate(), None
 
     def calibrate_manual(self):
         '''

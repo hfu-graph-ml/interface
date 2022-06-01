@@ -1,4 +1,5 @@
 from typing import Callable, List, Tuple, TypeAlias
+import numpy as np
 
 # ArUco marker related types
 Corners: TypeAlias = List[List[List[int]]]
@@ -29,6 +30,13 @@ MarkerBordersList: TypeAlias = List[
     ]
 ]
 
+CharucoCalibrationResult: TypeAlias = Tuple[
+    np.ndarray,
+    np.ndarray,
+    Tuple,
+    Tuple
+]
+
 # Queue related types
 SubscriptionParams: TypeAlias = Tuple[int, int]
 Subscription: TypeAlias = Tuple[int, SubscriptionParams, Callable[[bool, float | None], Tuple[CornerList, IDList]]]
@@ -40,5 +48,10 @@ class TrackerError:
 
 
 class GeneratorError:
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+
+class CalibrationError:
     def __init__(self, message: str) -> None:
         self.message = message
