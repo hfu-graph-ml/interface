@@ -63,11 +63,12 @@ def track_cmd(config_path: str):
 
 @cli.command('calib')
 @click.option('-c', '--config', 'config_path', default='config.toml', help='Path to the TOML config file', type=str, show_default=True)
-def calibrate_cmd(config_path: str):
+@click.option('-v', '--verbose', default=False, help='Use verbose output', type=bool, show_default=True)
+def calibrate_cmd(config_path: str, verbose: bool):
     '''
     Calibrate the camera in manual mode.
     '''
-    calib.execute(config_path)
+    calib.execute(config_path, verbose)
 
 
 def execute():

@@ -1,6 +1,8 @@
 from typing import Tuple
+import numpy as np
 import cv2 as cv
 import click
+import json
 import math
 import time
 import os
@@ -17,7 +19,7 @@ class Calibration:
     transform when rendering.
     '''
 
-    def __init__(self, cfg: config.Config) -> None:
+    def __init__(self, cfg: config.Config, verbose: bool) -> None:
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
             cfg['capture']['aruco']['uniques']
@@ -42,6 +44,7 @@ class Calibration:
 
         self._min_response = math.floor(((cols * rows) / 2) * 0.8)
         self._cfg = cfg['capture']
+        self._verbose = verbose
 
         self._image_size = None
         self._corners = []
@@ -79,6 +82,9 @@ class Calibration:
 
         n = 0
         while n < self._cfg['calibration']['number_images']:
+            if self._verbose:
+                click.echo('Capture image {:02d}'.format(n))
+
             ok, frame = cap.read()
             if not ok:
                 return CalibrationError('Failed to read the frame')
@@ -106,6 +112,10 @@ class Calibration:
         for frame in self._frames:
             # First detect ArUco markers in the current frame
             corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict)
+
+            # Skip if we didn't find any corners
+            if len(corners) == 0:
+                continue
 
             # Get the ChArUco board corners based on the previously detected markers
             response, charuco_corners, charuco_ids = cv.aruco.interpolateCornersCharuco(
@@ -168,3 +178,16 @@ class Calibration:
         Calibrate the camera manually by capturing a specified number of images.
         '''
         self._capture_manual()
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, o: any) -> any:
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+
+        return super().default(o)
+
+
+def dump_calibration_result(result: CharucoCalibrationResult) -> str:
+    ''''''
+    return json.dumps(result, cls=CustomJSONEncoder)
