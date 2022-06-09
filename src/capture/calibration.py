@@ -7,7 +7,8 @@ import math
 import time
 import os
 
-from typings.capture import CalibrationError, CharucoCalibrationResult
+from typings.capture.calibration import CharucoCalibrationResult, CalibrationMode
+from typings.error import Error, Err
 
 import config.config as config
 import capture.aruco as aruco
@@ -19,7 +20,7 @@ class Calibration:
     transform when rendering.
     '''
 
-    def __init__(self, cfg: config.Config, verbose: bool) -> None:
+    def __init__(self, cfg: config.Config, verbose: bool = False) -> None:
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
             cfg['capture']['aruco']['uniques']
@@ -64,7 +65,7 @@ class Calibration:
             img_path = os.path.join(save_path, img_name)
             cv.imwrite(img_path, frame)
 
-    def _capture(self, grayscale: bool = False) -> CalibrationError:
+    def _capture(self, grayscale: bool = False) -> Error:
         '''
         Capture images from camera and save them afterwards.
 
@@ -75,8 +76,8 @@ class Calibration:
 
         Returns
         -------
-        err : CalibrationError
-            Returns CalibrationError if an error was encountered, None if otherwise
+        err : Error
+            Returns Error if an error was encountered, None if otherwise
         '''
         cap = cv.VideoCapture(self._cfg['camera_id'])
 
@@ -87,7 +88,7 @@ class Calibration:
 
             ok, frame = cap.read()
             if not ok:
-                return CalibrationError('Failed to read the frame')
+                return Err('Failed to read the frame')
 
             if grayscale:
                 frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -100,14 +101,14 @@ class Calibration:
         cap.release()
         return None
 
-    def _detect(self) -> CalibrationError:
+    def _detect(self) -> Error:
         '''
         Detect markers and interpolate the ChArUco board corners.
 
         Returns
         -------
-        err : CalibrationError
-            Returns CalibrationError if an error was encountered, None if otherwise
+        err : Error
+            Returns Error if an error was encountered, None if otherwise
         '''
         for frame in self._frames:
             # First detect ArUco markers in the current frame
@@ -134,7 +135,7 @@ class Calibration:
                 return None
                 # TODO (Techassi): Add option to preview the image used and draw the detected markers
 
-        return CalibrationError('Failed to detect markers in any of the captured frames')
+        return Err('Failed to detect markers in any of the captured frames')
 
     def _calibrate(self) -> CharucoCalibrationResult:
         '''
@@ -157,9 +158,37 @@ class Calibration:
 
         return (cameraMatrix, distCoeffs, rvecs, tvecs)
 
-    def calibrate_auto(self) -> Tuple[CharucoCalibrationResult, CalibrationError]:
+    def _calibrate_auto(self) -> Tuple[CharucoCalibrationResult, Error]:
         '''
         Automatically calibrate the camera and projector setup.
+
+        Returns
+        -------
+        result : Tuple[CharucoCalibrationResult, Error]
+        '''
+        # Setup calibration renderer and start to render
+        r = 0
+
+        # Capture a set of frames from the capture device (camera)
+        err = self._capture(True)
+        if err != None:
+            return None, err
+
+        # Next detect ArUco markers and ChArUco board
+        err = self._detect()
+        if err != None:
+            return None, err
+
+        return self._calibrate(), None
+
+    def _calibrate_semi(self) -> Tuple[CharucoCalibrationResult, Error]:
+        '''
+        Calibrate the camera semi-automatic. This is done by capturing multiple images at an even interval while the
+        user moves the ChArUco board manually.
+
+        Returns
+        -------
+        result : Tuple[CharucoCalibrationResult, Error]
         '''
         # First capture a set of frames from the capture device (camera)
         err = self._capture(True)
@@ -173,14 +202,44 @@ class Calibration:
 
         return self._calibrate(), None
 
-    def calibrate_manual(self):
+    def _calibrate_manual(self):
         '''
         Calibrate the camera manually by capturing a specified number of images.
         '''
         self._capture_manual()
 
+    def calibrate(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Tuple[CharucoCalibrationResult, Error]:
+        '''
+        Calibrate the camera via the provided calibration mode.
+
+        Parameters
+        ----------
+        mode : CalibrationMode
+            Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL
+
+        Returns
+        -------
+        result : Tuple[CharucoCalibrationResult, Error]
+        '''
+        match mode:
+            case CalibrationMode.AUTO:
+                return self._calibrate_auto()
+            case CalibrationMode.SEMI_AUTO:
+                return self._calibrate_semi()
+            case CalibrationMode.MANUAL:
+                return self._calibrate_manual()
+            case _:
+                return None, Err('Invalid calibration mode')
+
+    def calibrate_save(self, auto: bool = True) -> Error:
+        ''''''
+
 
 class CustomJSONEncoder(json.JSONEncoder):
+    '''
+    This custom JSON encoder handles numpy ndarrays by converting them to a list by calling .tolist()
+    '''
+
     def default(self, o: any) -> any:
         if isinstance(o, np.ndarray):
             return o.tolist()
@@ -189,5 +248,12 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 def dump_calibration_result(result: CharucoCalibrationResult) -> str:
-    ''''''
+    '''
+    Dump the provided ChArUco calibration result as a JSON string.
+
+    Returns
+    -------
+    json : str
+        A JSON string of the ChArUco calibration result
+    '''
     return json.dumps(result, cls=CustomJSONEncoder)
