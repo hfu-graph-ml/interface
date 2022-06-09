@@ -21,7 +21,7 @@ def execute(config_path: str, verbose: bool):
 
     c = calib.Calibration(cfg, verbose)
 
-    result, err = c.calibrate_auto()
+    result, err = c._calibrate_auto()
     if err != None:
         click.echo(err.message)
         return
