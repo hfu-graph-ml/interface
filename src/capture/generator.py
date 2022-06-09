@@ -5,7 +5,7 @@ import os
 import config.config as config
 import capture.aruco as aruco
 
-from typings.capture import GeneratorError
+from typings.error import Err, Error
 
 
 class Generator:
@@ -26,7 +26,7 @@ class Generator:
         self._path = cfg['capture']['path']
         self._type = t
 
-    def generate(self, number: int, res: int) -> GeneratorError:
+    def generate(self, number: int, res: int) -> Error:
         '''
         Generate a variable number of ArUco markers.
 
@@ -50,10 +50,10 @@ class Generator:
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return GeneratorError('Generator initialized with invalid ArUco type')
+            return Err('Generator initialized with invalid ArUco type')
 
         if number <= 0:
-            return GeneratorError('Invalid number of markers')
+            return Err('Invalid number of markers')
 
         # Make sure the output folder exists
         path = os.path.join(self._path, 'markers')
@@ -108,7 +108,7 @@ class BoardGenerator():
         self._path = cfg['capture']['path']
         self._type = t
 
-    def generate(self, cols: int, rows: int, res_width: int, res_height: int) -> GeneratorError:
+    def generate(self, cols: int, rows: int, res_width: int, res_height: int) -> Error:
         '''
         Generate ChArUco board.
 
@@ -125,12 +125,12 @@ class BoardGenerator():
 
         Returns
         -------
-        err : GeneratorError
+        err : Error
             Non None if error occured
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
-            return GeneratorError('Generator initialized with invalid ArUco type')
+            return Err('Generator initialized with invalid ArUco type')
 
         # Make sure the output folder exists
         path = os.path.join(self._path, 'boards')

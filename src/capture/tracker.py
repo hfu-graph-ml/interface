@@ -10,16 +10,15 @@ import capture.aruco as aruco
 import utils.wait as wait
 import utils.fmt as fmt
 
-from typings.capture import (
+from typings.capture.aruco import (
     MarkerBordersList,
     MarkerCenterList,
-    GeneratorError,
     Subscription,
-    TrackerError,
     CornerList,
     Corners,
     IDList,
 )
+from typings.error import Err, Error
 
 
 class Tracker:
@@ -139,13 +138,13 @@ class Tracker:
         # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
         return (int(tl[0]), int(tl[1])), (int(tr[0]), int(tr[1])), (int(br[0]), int(br[1])), (int(bl[0]), int(bl[1]))
 
-    def _run(self) -> TrackerError:
+    def _run(self) -> Error:
         '''
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
         Returns
         -------
-        err : TrackerError
+        err : Error
             Non None if an error occured
         '''
         self._running = True
@@ -155,7 +154,7 @@ class Tracker:
 
         while self._running:
             if self._failed_reads >= self._max_failed_read:
-                return GeneratorError('Too many failed frame reads')
+                return Err('Too many failed frame reads')
 
             ok, frame = cap.read()
             if not ok:
@@ -173,13 +172,13 @@ class Tracker:
         # Cleanup
         cap.release()
 
-    def _run_debug(self) -> GeneratorError:
+    def _run_debug(self) -> Error:
         '''
         Run in debug mode.
 
         Returns
         -------
-        err : TrackerError
+        err : Error
             Non None if an error occured
         '''
         self._running = True
@@ -208,17 +207,17 @@ class Tracker:
         cv.destroyAllWindows()
         cap.release()
 
-    def start(self) -> GeneratorError:
+    def start(self) -> Error:
         '''
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
         Returns
         -------
-        err : TrackerError
+        err : Error
             Non None if an error occured
         '''
         if self._running:
-            return GeneratorError('Already running')
+            return Err('Already running')
 
         if self._debug:
             return self._run_debug()
@@ -269,7 +268,7 @@ class Tracker:
 
         return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
 
-    def unsubscribe(self, index: int) -> GeneratorError:
+    def unsubscribe(self, index: int) -> Error:
         '''
         External subscribers can unsubscribe from this tracker.
 
@@ -280,11 +279,11 @@ class Tracker:
 
         Returns
         -------
-        err : TrackerError
+        err : Error
             Non None if an error occured
         '''
         if index < 0 or index > len(self._subscribers) - 1:
-            return GeneratorError('Invalid index')
+            return Err('Invalid index')
 
         self._subscribers.pop(index)
         return None
