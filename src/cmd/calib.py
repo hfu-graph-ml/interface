@@ -4,6 +4,8 @@ import os
 import capture.calibration as calib
 import config.config as config
 
+import utils.input as inp
+
 
 def execute(config_path: str, verbose: bool):
     ''''''
@@ -16,7 +18,7 @@ def execute(config_path: str, verbose: bool):
 
     # Check if we already have a calib.json file
     if os.path.exists(file_path):
-        if not click.confirm('A calibration file already exists. Overide?', default=False):
+        if not inp.confirmation_prompt('A calibration file already exists. Overide?'):
             return
 
     c = calib.Calibration(cfg, verbose)

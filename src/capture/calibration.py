@@ -231,8 +231,46 @@ class Calibration:
             case _:
                 return None, Err('Invalid calibration mode')
 
-    def calibrate_save(self, auto: bool = True) -> Error:
-        ''''''
+    def calibrate_save(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Tuple[CharucoCalibrationResult, Error]:
+        '''
+        Calibrate the camera via the provided calibration mode. This method additionally saves the calibration data
+        in the .data/calib.json file.
+
+        Parameters
+        ----------
+        mode : CalibrationMode
+            Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL
+
+        Returns
+        -------
+        result : Tuple[CharucoCalibrationResult, Error]
+        '''
+        result, err = None, None
+
+        match mode:
+            case CalibrationMode.AUTO:
+                result, err = self._calibrate_auto()
+            case CalibrationMode.SEMI_AUTO:
+                result, err = self._calibrate_semi()
+            case CalibrationMode.MANUAL:
+                result, err = self._calibrate_manual()
+            case _:
+                return None, Err('Invalid calibration mode')
+
+        if err != None:
+            return None, err
+
+        file_path = os.path.join(self.cfg['capture']['path'], 'calib.json')
+        json_string = dump_calibration_result(result)
+
+        try:
+            file = open(file_path, 'w')
+            file.write(json_string)
+            file.close()
+        except:
+            return None, Err('Failed to save calibration data')
+
+        return result, None
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -251,9 +289,35 @@ def dump_calibration_result(result: CharucoCalibrationResult) -> str:
     '''
     Dump the provided ChArUco calibration result as a JSON string.
 
+    Parameters
+    ----------
+    result : CharucoCalibrationResult
+        The ChArUco calibration result
+
     Returns
     -------
     json : str
         A JSON string of the ChArUco calibration result
     '''
     return json.dumps(result, cls=CustomJSONEncoder)
+
+
+def read_calibration_result(path: str) -> Tuple[CharucoCalibrationResult, Error]:
+    '''
+    Read  ChArUco calibration result data from a JSON formatted file at 'path'.
+
+    Parameters
+    ----------
+    path : str
+        Path to file
+
+    Returns
+    -------
+    result : Tuple[CharucoCalibrationResult, Error]
+    '''
+    try:
+        file = open(path)
+        result = json.load(file)
+        return result, None
+    except:
+        return None, Err('Failed to read calibration data')
