@@ -1,4 +1,4 @@
-from typings.capture import MarkerBordersList
+from typings.capture.aruco import MarkerBordersList
 
 from .shared import Shared
 
