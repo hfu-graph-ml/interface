@@ -56,4 +56,17 @@ def url_from(base: str, paths: tuple) -> str:
 
 
 def fps_to_ms(fps: int) -> int:
+    '''
+    Convert FPS to a millisecond interval.
+
+    Parameters
+    ----------
+    fps : int
+        Input FPS as integer
+
+    Returns
+    -------
+    interval : int
+        Interval in milliseconds as integer number
+    '''
     return math.floor((1 / fps) * 1000)
