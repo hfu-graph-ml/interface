@@ -3,6 +3,7 @@ from queue import Queue
 import cv2 as cv
 import threading
 import itertools
+import math
 
 from renderer.debug import DebugRenderer
 import config.config as config
@@ -75,6 +76,9 @@ class Tracker:
         '''
         params = cv.aruco.DetectorParameters_create()
         cap = cv.VideoCapture(self._camera_id)
+        cap.set(cv.CAP_PROP_AUTOFOCUS, 0)
+        cap.set(cv.CAP_PROP_FRAME_HEIGHT, self._frame_height)
+        cap.set(cv.CAP_PROP_FRAME_WIDTH, self._frame_width)
 
         # Retrieve frame height and width
         self._frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
@@ -105,7 +109,8 @@ class Tracker:
                 continue
 
             pos = self._extract_center_position(corners_per_marker[0])
-            marker_list.append((pos, 0.0, ids[i][0]))
+            ang = self._extract_angle(corners_per_marker[0], pos)
+            marker_list.append((pos, ang, ids[i][0]))
 
         return marker_list
 
@@ -117,8 +122,9 @@ class Tracker:
                 continue
 
             center = self._extract_center_position(corners_per_marker[0])
+            angle = self._extract_angle(corners_per_marker[0], center)
             borders = self._extract_borders(corners_per_marker[0])
-            marker_list.append((borders, center, 0.0, ids[i][0]))
+            marker_list.append((borders, center, angle, ids[i][0]))
 
         return marker_list
 
@@ -137,6 +143,17 @@ class Tracker:
         (tl, tr, br, bl) = corners
         # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
         return (int(tl[0]), int(tl[1])), (int(tr[0]), int(tr[1])), (int(br[0]), int(br[1])), (int(bl[0]), int(bl[1]))
+
+    def _extract_angle(self, corners: Corners, center: Tuple[int, int]) -> float:
+        '''
+        Extract the angle from a single marker. The angle gets calculated by first calculating the vector between the
+        center position and the top left corner position. Then we calculate the length to then calculate the unit vector
+        which then can be used to calculate the angle by using arcsin.
+        '''
+        x, y = center[0] - corners[0][0], center[1] - corners[0][1]  # Vec from center to top left corner
+        len = math.sqrt(math.pow(x, 2) + math.pow(y, 2))  # Calculate length of vec
+        deg = math.degrees(math.asin(y / len))  # Use unit vec to calculate angle
+        return deg * math.copysign(1, x)
 
     def _run(self) -> Error:
         '''
