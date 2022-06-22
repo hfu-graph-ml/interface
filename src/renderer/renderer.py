@@ -1,6 +1,8 @@
+import time
 from typing import Dict, List, Tuple
 import numpy as np
 import cv2 as cv
+import threading
 import glob
 import os
 
@@ -13,7 +15,7 @@ import utils.wait as wait
 import utils.fmt as fmt
 
 from typings.renderer import ArUcoMarker, Node, RenderObject, Corner
-from typings.capture.aruco import MarkerCenterList
+from typings.capture.aruco import MarkerCenterList, RetrieveFunc
 from typings.error import Error, Err
 
 
@@ -35,11 +37,11 @@ class Renderer(Shared):
         self._frame_height = cfg['renderer']['height']
         self._frame_width = cfg['renderer']['width']
 
+        self._adjusted = False
+
         # Camera dimensions
         self._camera_frame_height = 0
         self._camera_frame_width = 0
-
-        # State
 
         # Objects
         self._objects: Dict[int, RenderObject] = {}
@@ -119,13 +121,44 @@ class Renderer(Shared):
         x, y = self._corner_coords(Corner.BOTTOM_LEFT, self._marker_images[3], 0.5)
         self._objects[3] = ArUcoMarker(y, x, self._marker_images[3], 0.5)
 
+    def _transform_projection_in_intervals(self):
+        ''''''
+        t = threading.Thread(None, self._transform_projection, 'transform-projection')
+        self._transform_thread = t
+        t.start()
+
+    def _transform_projection(self):
+        ''''''
+        _, _, retrieve = self._tracker.subscribe()
+        while True:
+            try:
+                markers = retrieve(False)
+            except:
+                continue
+
+            time.sleep()
+
     def _update_markers(self, markers: MarkerCenterList):
         ''''''
         for marker in markers:
+            if marker[2] in [0, 1, 2, 3]:
+                continue
+
             if marker[2] not in self._objects:
                 self._objects[marker[2]] = Node(marker[0][0], marker[0][1], 20, colors.RED)
             else:
                 self._objects[marker[2]].update(marker[0][0], marker[0][1])
+
+    def _subscribe(self) -> RetrieveFunc:
+        '''
+        Subscribe to the tracker.
+        '''
+        id, params, retrieve = self._tracker.subscribe()
+        self._camera_frame_height = params[1]
+        self._camera_frame_width = params[0]
+        self._subscription_id = id
+
+        return retrieve
 
     def _prepare(self):
         '''
@@ -133,6 +166,8 @@ class Renderer(Shared):
         '''
         self._load_aruco_marker_images()
         self._prepare_corner_markers()
+
+        cv.namedWindow(self._window_name, cv.WINDOW_NORMAL)
 
     def _render(self, frame: cv.Mat):
         '''
@@ -149,16 +184,8 @@ class Renderer(Shared):
             return Err('Already running')
         self._running = True
 
-        # Prepare renderer
         self._prepare()
-
-        cv.namedWindow(self._window_name, cv.WINDOW_NORMAL)
-
-        # Subscribe to the tracker
-        id, params, retrieve = self._tracker.subscribe()
-        self._camera_frame_height = params[1]
-        self._camera_frame_width = params[0]
-        self._subscription_id = id
+        retrieve = self._subscribe()
 
         # White frame sized width x height
         initial_frame = 255 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)

@@ -5,7 +5,8 @@ CornerList: TypeAlias = Tuple[Corners, ...]
 IDList: TypeAlias = List[List[int]]
 
 SubscriptionParams: TypeAlias = Tuple[int, int]
-Subscription: TypeAlias = Tuple[int, SubscriptionParams, Callable[[bool, float | None], Tuple[CornerList, IDList]]]
+RetrieveFunc: TypeAlias = Callable[[bool, float | None], Tuple[CornerList, IDList]]
+Subscription: TypeAlias = Tuple[int, SubscriptionParams, RetrieveFunc]
 
 # List of tuples of markers which consist of a Tuple for the <x, y> center position, the angle as a float value between
 # 0 and 360 degrees and and integer ID.
