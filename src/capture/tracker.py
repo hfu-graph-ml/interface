@@ -2,7 +2,6 @@ from typing import List, Tuple
 from queue import Queue
 import cv2 as cv
 import threading
-import itertools
 import math
 
 from renderer.debug import DebugRenderer
@@ -77,6 +76,7 @@ class Tracker:
         params = cv.aruco.DetectorParameters_create()
         cap = cv.VideoCapture(self._camera_id)
         cap.set(cv.CAP_PROP_AUTOFOCUS, 0)
+        cap.set(cv.CAP_PROP_AUTO_WB, 0)
         cap.set(cv.CAP_PROP_FRAME_HEIGHT, self._frame_height)
         cap.set(cv.CAP_PROP_FRAME_WIDTH, self._frame_width)
 
@@ -179,6 +179,9 @@ class Tracker:
                 # error when the treshold is reached
                 self._failed_reads += 1
                 continue
+
+            # Gray-scale frame
+            frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
             # Detect the markers
             corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict, parameters=params)

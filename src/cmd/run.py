@@ -42,7 +42,7 @@ def execute(config_path: str):
             calib_data, err = read_calibration_result(calib_file_path)
 
     if err != None:
-        click.echo(err)
+        click.echo(err.message)
         return
 
     # Create tracker
