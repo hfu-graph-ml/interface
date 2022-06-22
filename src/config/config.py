@@ -21,7 +21,6 @@ class TrackerOptions(TypedDict):
 
 
 class CalibrationOptions(TypedDict):
-    corners: List[int]
     number_images: int
     interval: float
     height: int
@@ -122,9 +121,6 @@ def validate(cfg: Config) -> Error:
 
     if cfg['capture']['tracker']['max_failed_read'] < 0:
         return Err('Invalid max failed read amount')
-
-    if len(cfg['capture']['calibration']['corners']) < 4:
-        return Err('Invalid number of corner markers. Expected 4 IDs')
 
     if cfg['capture']['calibration']['number_images'] <= 0:
         return Err('Invalid number of calibration images. Choose value > 0. More than 5 recommended')

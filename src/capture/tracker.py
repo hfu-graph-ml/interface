@@ -153,7 +153,7 @@ class Tracker:
         x, y = center[0] - corners[0][0], center[1] - corners[0][1]  # Vec from center to top left corner
         len = math.sqrt(math.pow(x, 2) + math.pow(y, 2))  # Calculate length of vec
         deg = math.degrees(math.asin(y / len))  # Use unit vec to calculate angle
-        return deg * math.copysign(1, x)
+        return deg
 
     def _run(self) -> Error:
         '''
@@ -183,8 +183,8 @@ class Tracker:
             # Detect the markers
             corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
             if len(corners) > 0:
-                marker = self._transform_markers_to_center(corners, ids)
-                self.notify(corners, ids)
+                markers = self._transform_markers_to_center(corners, ids)
+                self.notify(markers)
 
         # Cleanup
         cap.release()
@@ -256,20 +256,17 @@ class Tracker:
         self._running = False
         self._thread.join()
 
-    def notify(self, corners: CornerList, ids: IDList):
+    def notify(self, markers: MarkerCenterList):
         '''
         Notify subscribers with detected markers.
 
         Parameters
         ----------
         corners : CornerList
-            A list of detected corners
-        ids : IDList
-            A list of IDs
+            A list of detected markers
         '''
-        ids = list(itertools.chain.from_iterable(ids))
         for sub in self._subscribers:
-            sub.put((corners, ids))
+            sub.put(markers)
 
     def subscribe(self) -> Subscription:
         '''

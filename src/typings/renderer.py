@@ -65,7 +65,7 @@ class Node(RenderObject):
         '''
         Render a circle around the tracked marker.
         '''
-        cv.circle(frame, (self._x, self._y), self._radius, self._color, 2)
+        cv.circle(frame, (self._x, self._y), self._radius, self._color, 5)
 
 
 class ArUcoMarker(RenderObject):
