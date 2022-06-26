@@ -2,7 +2,7 @@ from enum import Enum, unique, auto
 from typing import Tuple, TypeAlias
 import numpy as np
 
-CharucoCalibrationResult: TypeAlias = Tuple[
+CharucoCalibrationData: TypeAlias = Tuple[
     np.ndarray,
     np.ndarray,
     Tuple,

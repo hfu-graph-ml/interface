@@ -27,26 +27,13 @@ def execute(config_path: str):
     # Check if the user already calibrated the camera via the separate command. If yes, we prompt the user to either use
     # the existing data or re-do the calibration. If no, we prompt the user to do the calibration or exit the
     # application.
-    calib_file_path = os.path.join(cfg['capture']['path'], 'calib.json')
-    calib_data, err = None, None
-
-    if not os.path.exists(calib_file_path):
-        if inp.confirmation_prompt('No calibration file (.data/calib.json) detected. Run calibration?'):
-            c = Calibration(cfg)
-            calib_data, err = c.calibrate_save()
-    else:
-        if inp.confirmation_prompt('Calibration file exists. Re-run calibration?'):
-            c = Calibration(cfg)
-            calib_data, err = c.calibrate_save()
-        else:
-            calib_data, err = read_calibration_result(calib_file_path)
-
-    if err != None:
+    result = inp.handle_calibration(cfg)
+    if result.is_err():
         click.echo(err.message)
         return
 
     # Create tracker
-    trk = Tracker(cfg)
+    trk = Tracker(cfg, result.unpack())
     err = trk.start()
     if err != None:
         click.echo(err.message)
