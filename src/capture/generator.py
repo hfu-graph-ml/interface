@@ -137,11 +137,9 @@ class BoardGenerator():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        board = cv.aruco.CharucoBoard_create(
+        board = aruco.board_from(
             cols + 1,
             rows + 1,
-            0.04,
-            0.02,
             self._dict
         )
 

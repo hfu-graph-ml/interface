@@ -10,6 +10,7 @@ import capture.aruco as aruco
 import utils.wait as wait
 import utils.fmt as fmt
 
+from typings.capture.calibration import CharucoCalibrationData
 from typings.capture.aruco import (
     MarkerBordersList,
     MarkerCenterList,
@@ -26,7 +27,12 @@ class Tracker:
     This class describes a tracker which is able to track ArUco markers.
     '''
 
-    def __init__(self, cfg: config.Config, force_debug: bool = False) -> None:
+    def __init__(
+        self,
+        cfg: config.Config,
+        calib_result: CharucoCalibrationData,
+        force_debug: bool = False
+    ) -> None:
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
             cfg['capture']['aruco']['uniques']
@@ -41,6 +47,7 @@ class Tracker:
 
         # ArUco marker related values
         self._dict = cv.aruco.Dictionary_get(t)
+        self._board = aruco.board_from(1, 1, self._dict)
         self._path = cfg['capture']['path']
         self._type = t
 
@@ -54,6 +61,7 @@ class Tracker:
         self._frame_width = 0
 
         # Misc
+        self._calib = calib_result
         self._running = False
         self._thread = None
 

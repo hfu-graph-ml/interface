@@ -57,3 +57,14 @@ def dict_from(k: str) -> Tuple[int, bool]:
         return -1, False
 
     return MARKER_MAP[k], True
+
+
+def board_from(cols: int, rows: int, dict: int, marker_length: float = 0.04, marker_separation: float = 0.02):
+    ''''''
+    return cv.aruco.CharucoBoard_create(
+        cols,
+        rows,
+        marker_length,
+        marker_separation,
+        dict
+    )
