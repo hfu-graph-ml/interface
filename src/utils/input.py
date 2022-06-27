@@ -41,7 +41,7 @@ def handle_calibration(cfg: Config) -> Result[CharucoCalibrationData, Error]:
     '''
     Handle calibration flow. This first detects if a calibration jSON file exists. If this is not the case the user is
     asked to run the calibration. Denying this prompt exists the program. If a JSON file already exists the user is
-    prompted if the file should be overwritten. If not, the existing JSON file gets read.
+    prompted if the file should be overwritten. If not, the existing JSON file gets used.
 
     Parameters
     ----------

@@ -1,10 +1,10 @@
-from typing import List, Tuple, TypedDict
+from typing import TypedDict
 import toml
 import os
 
 import utils.checks as checks
 
-from typings.error import Error, Err
+from typings.error import Result, Error, Err, Ok
 
 ARUCO_ALLOWED_UNIQUES = [50, 100, 250, 1000]
 ARUCO_ALLOWED_SIZES = [4, 5, 6, 7]
@@ -54,7 +54,7 @@ class Config(TypedDict):
     capture: CaptureOptions
 
 
-def read(path: str, auto_validate: bool = False) -> Tuple[Config, Error]:
+def read(path: str, auto_validate: bool = False) -> Result[Config, Error]:
     '''
     Read a TOML file at 'path' and return a new Config class.
 
@@ -71,20 +71,25 @@ def read(path: str, auto_validate: bool = False) -> Tuple[Config, Error]:
         The decoded config or err when error occured
     '''
     if not path:
-        return None, Err('Invalid/empty path')
+        return Err(Error('Invalid/empty path'))
 
     if not os.path.exists(path):
-        return None, Err('File not found')
+        return Err(Error('File not found'))
 
     try:
         config = toml.load(path, Config)
 
         if not auto_validate:
-            return config, None
+            return Ok(config)
 
-        return config, validate(config)
+        err = validate(config)
+        if err != None:
+            return Err(Error(err.string()))
+
+        return Ok(config)
+
     except toml.TomlDecodeError:
-        return None, Err('TOML decode error')
+        return Err(Error('TOML decode error'))
 
 
 def validate(cfg: Config) -> Error:

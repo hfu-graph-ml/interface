@@ -26,6 +26,9 @@ class Result(Generic[R, E]):
     def unpack(self) -> R:
         return self._res
 
+    def error(self) -> E:
+        return self._err
+
 
 def Ok(res: R) -> Result[R, E]:
     return Result[R, E](res)
