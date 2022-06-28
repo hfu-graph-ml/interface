@@ -54,11 +54,12 @@ def run_cmd(config_path: str):
 
 @cli.command('track')
 @click.option('-c', '--config', 'config_path', default='config.toml', help='Path to the TOML config file', type=str, show_default=True)
-def track_cmd(config_path: str):
+@click.option('-m', '--mode', default='auto', help="The calibration mode. Can be 'auto', 'semi' or 'manual'", type=str, show_default=True)
+def track_cmd(config_path: str, mode: str):
     '''
     Run tracking in debug mode.
     '''
-    track.execute(config_path)
+    track.execute(config_path, mode)
 
 
 @cli.command('calib')

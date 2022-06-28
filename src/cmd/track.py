@@ -5,7 +5,7 @@ import config.config as config
 import utils.input as inp
 
 
-def execute(config_path: str):
+def execute(config_path: str, calib_mode: str):
     '''
     Run debug tracking only.
 
@@ -23,7 +23,7 @@ def execute(config_path: str):
 
     click.echo('Reading / capturing calibration data...')
 
-    calib_result = inp.handle_calibration(config_result.unpack())
+    calib_result = inp.handle_calibration(config_result.unpack(), calib_mode)
     if calib_result.is_err():
         click.echo(f'Error while calibration: {calib_result.error().string()}')
         return

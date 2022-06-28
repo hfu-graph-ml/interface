@@ -85,7 +85,7 @@ class Calibration:
 
             ok, frame = cap.read()
             if not ok:
-                return Err('Failed to read the frame')
+                return Error('Failed to read the frame')
 
             if grayscale:
                 frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -169,12 +169,12 @@ class Calibration:
         # Capture a set of frames from the capture device (camera)
         err = self._capture(True)
         if err != None:
-            return Err(Error(err.string()))
+            return Err(err)
 
         # Next detect ArUco markers and ChArUco board
         err = self._detect()
         if err != None:
-            return Err(Error(err.string()))
+            return Err(err)
 
         data = self._calibrate()
         return Ok(data)
@@ -191,12 +191,12 @@ class Calibration:
         # First capture a set of frames from the capture device (camera)
         err = self._capture(True)
         if err != None:
-            return Err(Error(err.string()))
+            return Err(err)
 
         # Next detect ArUco markers and ChArUco board
         err = self._detect()
         if err != None:
-            return Err(Error(err.string()))
+            return Err(err)
 
         data = self._calibrate()
         return Ok(data)

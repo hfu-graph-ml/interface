@@ -3,8 +3,8 @@ import os
 from capture.calibration import Calibration, read_calibration_result
 from config.config import Config
 
-from typings.capture.calibration import CharucoCalibrationData
-from typings.error import Result, Error
+from typings.capture.calibration import CalibrationMode, CharucoCalibrationData
+from typings.error import Err, Result, Error
 
 
 def confirmation_prompt(text: str, default: bool | None = False) -> bool:
@@ -37,7 +37,7 @@ def confirmation_prompt(text: str, default: bool | None = False) -> bool:
     return inp == 'y'
 
 
-def handle_calibration(cfg: Config) -> Result[CharucoCalibrationData, Error]:
+def handle_calibration(cfg: Config, mode: str) -> Result[CharucoCalibrationData, Error]:
     '''
     Handle calibration flow. This first detects if a calibration jSON file exists. If this is not the case the user is
     asked to run the calibration. Denying this prompt exists the program. If a JSON file already exists the user is
@@ -53,15 +53,22 @@ def handle_calibration(cfg: Config) -> Result[CharucoCalibrationData, Error]:
     result : Result[CharucoCalibrationData, Error]
         Calibration data or error
     '''
+    # First we try to convert the provided mode (string) into an enum
+    result = CalibrationMode.from_str(mode)
+    if result.is_err():
+        return Err(result.error())
+
+    # Construct calib JSON file path
     calib_file_path = os.path.join(cfg['capture']['path'], 'calib.json')
 
+    # Check if we already have a calib JSON file
     if not os.path.exists(calib_file_path):
         if confirmation_prompt('No calibration file (.data/calib.json) detected. Run calibration?'):
             c = Calibration(cfg)
-            return c.calibrate_save()
+            return c.calibrate_save(result.unpack())
 
     if confirmation_prompt('Calibration file exists. Re-run calibration?'):
         c = Calibration(cfg)
-        return c.calibrate_save()
+        return c.calibrate_save(result.unpack())
     else:
         return read_calibration_result(calib_file_path)
