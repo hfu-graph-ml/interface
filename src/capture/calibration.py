@@ -250,7 +250,7 @@ class Calibration:
             return Err(Error('Calibration error: {}'.format(result.error().string())))
 
         file_path = os.path.join(self._cfg['capture']['path'], 'calib.json')
-        json_string = dump_calibration_result(result.unpack())
+        json_string = dump_calibration_result(result.unwrap())
 
         try:
             file = open(file_path, 'w')
@@ -307,6 +307,11 @@ def read_calibration_result(path: str) -> Result[CharucoCalibrationData, Error]:
     try:
         file = open(path)
         result = json.load(file)
+
+        # NOTE (Techassi): This is dirty as hell, but is required by OpenCV
+        result[0] = np.array(result[0])
+        result[1] = np.array(result[1])
+
         return Ok(result)
     except:
         return Err(Error('Failed to read calibration data'))

@@ -9,7 +9,7 @@ import utils.input as inp
 
 def execute(config_path: str, verbose: bool):
     ''''''
-    cfg, err = config.read(config_path)
+    cfg, err = config.read_config(config_path)
     if err != None:
         click.echo(f'Error while reading config: {err.message}')
         return

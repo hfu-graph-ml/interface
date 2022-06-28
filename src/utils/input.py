@@ -65,10 +65,10 @@ def handle_calibration(cfg: Config, mode: str) -> Result[CharucoCalibrationData,
     if not os.path.exists(calib_file_path):
         if confirmation_prompt('No calibration file (.data/calib.json) detected. Run calibration?'):
             c = Calibration(cfg)
-            return c.calibrate_save(result.unpack())
+            return c.calibrate_save(result.unwrap())
 
     if confirmation_prompt('Calibration file exists. Re-run calibration?'):
         c = Calibration(cfg)
-        return c.calibrate_save(result.unpack())
+        return c.calibrate_save(result.unwrap())
     else:
         return read_calibration_result(calib_file_path)

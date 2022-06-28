@@ -45,21 +45,23 @@ def gen_board(config_path: str, cols: int, rows: int, width, height):
 
 @cli.command('run')
 @click.option('-c', '--config', 'config_path', default='config.toml', help='Path to the TOML config file', type=str, show_default=True)
-def run_cmd(config_path: str):
+@click.option('-m', '--mode', default='auto', help="The calibration mode. Can be 'auto', 'semi' or 'manual'", type=str, show_default=True)
+def run_cmd(config_path: str, mode: str):
     '''
     Run the main application.
     '''
-    run.execute(config_path)
+    run.execute(config_path, mode)
 
 
 @cli.command('track')
 @click.option('-c', '--config', 'config_path', default='config.toml', help='Path to the TOML config file', type=str, show_default=True)
 @click.option('-m', '--mode', default='auto', help="The calibration mode. Can be 'auto', 'semi' or 'manual'", type=str, show_default=True)
-def track_cmd(config_path: str, mode: str):
+@click.option('--color', default=False, help='Display the debug renderer in color mode', type=bool, show_default=True, is_flag=True)
+def track_cmd(config_path: str, mode: str, color: bool):
     '''
     Run tracking in debug mode.
     '''
-    track.execute(config_path, mode)
+    track.execute(config_path, mode, color)
 
 
 @cli.command('calib')

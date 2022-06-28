@@ -54,7 +54,7 @@ class Config(TypedDict):
     capture: CaptureOptions
 
 
-def read(path: str, auto_validate: bool = False) -> Result[Config, Error]:
+def read_config(path: str, auto_validate: bool = False) -> Result[Config, Error]:
     '''
     Read a TOML file at 'path' and return a new Config class.
 

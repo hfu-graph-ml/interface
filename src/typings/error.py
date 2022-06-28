@@ -40,7 +40,7 @@ class Result(Generic[R, E]):
         '''
         return self._err != None
 
-    def unpack(self) -> R:
+    def unwrap(self) -> R:
         '''
         Unpacks the the result. The user should check with `is_ok` before unpacking the result as this function will
         throw an exception.

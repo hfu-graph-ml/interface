@@ -1,20 +1,21 @@
 from typing import List, Tuple
 from queue import Queue
+import numpy as np
 import cv2 as cv
 import threading
 import math
 
-from renderer.debug import DebugRenderer
-import config.config as config
+from config.config import Config
 import capture.aruco as aruco
-import utils.wait as wait
 import utils.fmt as fmt
 
 from typings.capture.calibration import CharucoCalibrationData
 from typings.capture.aruco import (
     MarkerBordersList,
     MarkerCenterList,
+    RawSubscription,
     Subscription,
+    Subscriber,
     CornerList,
     Corners,
     IDList,
@@ -27,12 +28,17 @@ class Tracker:
     This class describes a tracker which is able to track ArUco markers.
     '''
 
-    def __init__(
-        self,
-        cfg: config.Config,
-        calib_result: CharucoCalibrationData,
-        force_debug: bool = False
-    ) -> None:
+    def __init__(self, cfg: Config, calib_data: CharucoCalibrationData) -> None:
+        '''
+        Create a new tracker instance.
+
+        Parameters
+        ----------
+        cfg : config.Config
+            Configuration data
+        calib_data : CharucoCalibrationData
+            Camera calibration data
+        '''
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
             cfg['capture']['aruco']['uniques']
@@ -47,30 +53,27 @@ class Tracker:
 
         # ArUco marker related values
         self._dict = cv.aruco.Dictionary_get(t)
-        self._board = aruco.board_from(1, 1, self._dict)
+        self._board = aruco.board_from(2, 2, self._dict, marker_length=0.09, marker_separation=0.01)
         self._path = cfg['capture']['path']
         self._type = t
 
         # Tracking
         self._delay = fmt.fps_to_ms(cfg['capture']['fps'])
         self._camera_id = cfg['capture']['camera_id']
-        self._subscribers: List[Queue] = []
+        self._subscribers: List[Subscriber] = []
+
+        # Current frames
+        self._color_frame = np.array([])
+        self._frame = np.array([])
 
         # Dimensions
         self._frame_height = 0
         self._frame_width = 0
 
         # Misc
-        self._calib = calib_result
+        self._calib = calib_data
         self._running = False
         self._thread = None
-
-        # Debugging
-        self._debug = cfg['capture']['tracker']['debug']
-
-        # Check if the user forces debug
-        if force_debug:
-            self._debug = True
 
     def _setup(self) -> Tuple[any, any]:
         '''
@@ -93,6 +96,21 @@ class Tracker:
         self._frame_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 
         return cap, params
+
+    def _is_running(self) -> bool:
+        '''
+        Returns if the renderer is already running.
+
+        Returns
+        -------
+        running: bool
+            If renderer is running
+        '''
+        if self._running:
+            return True
+
+        self._running = True
+        return False
 
     def _transform_markers_to_center(self, corner_list: CornerList, ids: IDList) -> MarkerCenterList:
         '''
@@ -188,52 +206,32 @@ class Tracker:
                 self._failed_reads += 1
                 continue
 
-            # Gray-scale frame
+            self._color_frame = frame
             frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-
-            # Detect the markers
-            corners, ids, _ = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
-            if len(corners) > 0:
-                markers = self._transform_markers_to_center(corners, ids)
-                self.notify(markers)
-
-        # Cleanup
-        cap.release()
-
-    def _run_debug(self) -> Error:
-        '''
-        Run in debug mode.
-
-        Returns
-        -------
-        err : Error
-            Non None if an error occured
-        '''
-        self._running = True
-
-        # Setup video capture and ArUco detection params
-        cap, params = self._setup()
-        debug_renderer = DebugRenderer()
-
-        while self._running:
-            ok, frame = cap.read()
-            if not ok:
-                continue
+            self._frame = frame
 
             # Detect the markers
             corners, ids, rejected = cv.aruco.detectMarkers(frame, self._dict, parameters=params)
+
+            # Refine markers
+            corners, ids, rejected, recovered = cv.aruco.refineDetectedMarkers(
+                frame, self._board, corners, ids, rejected,
+                cameraMatrix=self._calib[0],
+                distCoeffs=self._calib[1]
+            )
+
             if len(corners) > 0:
-                markers = self._transform_markers_to_borders(corners, ids)
-                debug_renderer.render(markers, frame)
-
-            cv.imshow('tracking-debug', frame)
-
-            if wait.wait_or(self._delay):
-                break
+                # markers = self._transform_markers_to_center(corners, ids)
+                self.notify(corners, ids, rejected, recovered)
 
         # Cleanup
-        cv.destroyAllWindows()
         cap.release()
+
+    def get_frame(self) -> Tuple[bool, cv.Mat]:
+        return self._frame.any(), self._frame
+
+    def get_color_frame(self) -> Tuple[bool, cv.Mat]:
+        return self._frame.any(), self._color_frame
 
     def start(self) -> Error:
         '''
@@ -244,11 +242,8 @@ class Tracker:
         err : Error
             Non None if an error occured
         '''
-        if self._running:
+        if self._is_running():
             return Err('Already running')
-
-        if self._debug:
-            return self._run_debug()
 
         # Construct a new thread
         t = threading.Thread(None, self._run, 'tracking-thread')
@@ -267,17 +262,28 @@ class Tracker:
         self._running = False
         self._thread.join()
 
-    def notify(self, markers: MarkerCenterList):
+    def notify(self, corners: CornerList, ids: IDList, rejected, recovered):
         '''
         Notify subscribers with detected markers.
 
         Parameters
         ----------
         corners : CornerList
-            A list of detected markers
+            A list of corners of detected markers
+        ids : IDList
+            A list of detected marker IDs
+        rejected
+            A list of rejected markers
+        recovered
+            A list of recovered markers
         '''
         for sub in self._subscribers:
-            sub.put(markers)
+            # If the subription is raw, just pass raw values without any processing
+            if sub[0]:
+                sub[1].put((corners, ids, rejected, recovered))
+            else:
+                markers = self._transform_markers_to_borders(corners, ids)
+                sub[1].put(markers)
 
     def subscribe(self) -> Subscription:
         '''
@@ -286,10 +292,25 @@ class Tracker:
         Returns
         -------
         subscription : Subscription
-            A tuple with the subscription ID and the retrieve function
+            A tuple consisting of the subscription ID, frame widht and height and the retrieve function
         '''
         q = Queue()
-        self._subscribers.append(q)
+        self._subscribers.append((False, q))
+
+        return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
+
+    def subscribe_raw(self) -> RawSubscription:
+        '''
+        External consumers can subscribe to this tracker to get real-time marker positions. This returns raw tracking
+        data instead of cleaned data via the `subscribe` method.
+
+        Returns
+        -------
+        subscription : RawSubscription
+            A tuple consisting of the subscription ID, frame widht and height and the retrieve function
+        '''
+        q = Queue()
+        self._subscribers.append((True, q))
 
         return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
 

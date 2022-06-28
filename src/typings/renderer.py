@@ -13,9 +13,14 @@ class Corner(Enum):
 
 
 class RenderObject:
-    def __init__(self, x: int, y: int, scale: float) -> None:
+    '''
+    This is the base class of each RenderObject. It provides some shared attributes and methods.
+    '''
+
+    def __init__(self, x: int, y: int, name: str, scale: float) -> None:
         self._prev_scale = -1
         self._scale = scale
+        self._name = name
         self._x: int = x
         self._y: int = y
 
@@ -53,8 +58,12 @@ class RenderObject:
 
 
 class Node(RenderObject):
-    def __init__(self, x: int, y: int, radius: int, color: Tuple[int, int, int]) -> None:
-        super().__init__(x, y, 1.0)
+    '''
+    This renders a node around a tracked (and detected) marker.
+    '''
+
+    def __init__(self, x: int, y: int, radius: int, name: str, color: Tuple[int, int, int]) -> None:
+        super().__init__(x, y, name, 1.0)
         self._color: Tuple[int, int, int] = color
         self._radius = radius
 
@@ -69,8 +78,12 @@ class Node(RenderObject):
 
 
 class ArUcoMarker(RenderObject):
-    def __init__(self, x: int, y: int, marker: cv.Mat, scale: float = 1.0) -> None:
-        super().__init__(x, y, scale)
+    '''
+    This renders an ArUco marker at the specified loaction and scale.
+    '''
+
+    def __init__(self, x: int, y: int, marker: cv.Mat, name: str, scale: float = 1.0) -> None:
+        super().__init__(x, y, name, scale)
         self._src_marker = marker  # This is the original marker
         self._marker = marker  # This is the current marker being used for rendering
 
@@ -95,3 +108,22 @@ class ArUcoMarker(RenderObject):
         Scale the marker by calling super's scale method with the current and original marker mat.
         '''
         self._marker = super().scale(self._marker, self._src_marker)
+
+
+class ArUcoMarkerTracking(RenderObject):
+    '''
+    This renders ArUco marker tracking debug information. This outlines the marker, draws a center dot and prints
+    out the angle of the marker.
+    '''
+
+    def __init__(self, x: int, y: int, name: str, scale: float) -> None:
+        super().__init__(x, y, name, scale)
+
+
+class ConfettiParticle(RenderObject):
+    '''
+    This renders a confetti particle.
+    '''
+
+    def __init__(self, x: int, y: int, name: str, scale: float) -> None:
+        super().__init__(x, y, name, scale)

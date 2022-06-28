@@ -1,7 +1,7 @@
 import click
 
 from capture.generator import BoardGenerator, Generator
-import config.config as config
+from config.config import read_config
 
 
 def markers(config_path: str, number: int, res: int):
@@ -17,7 +17,7 @@ def markers(config_path: str, number: int, res: int):
     res : int
         Width/Height (Resolution) of the ArUco markers in pixels
     '''
-    cfg, err = config.read(config_path)
+    cfg, err = read_config(config_path)
     if err != None:
         click.echo(f'Error while reading config: {err.message}')
         return
@@ -36,7 +36,7 @@ def markers(config_path: str, number: int, res: int):
 
 def board(config_path: str, cols: int, rows: int, res_width: int, res_height: int):
     ''''''
-    cfg, err = config.read(config_path)
+    cfg, err = read_config(config_path)
     if err != None:
         click.echo(f'Error while reading config: {err.message}')
         return

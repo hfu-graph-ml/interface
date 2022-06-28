@@ -1,15 +1,13 @@
 import os
 import click
 
-from capture.calibration import Calibration, read_calibration_result
+from utils.input import handle_calibration
 from renderer.renderer import Renderer
+from config.config import read_config
 from capture.tracker import Tracker
 
-import config.config as config
-import utils.input as inp
 
-
-def execute(config_path: str):
+def execute(config_path: str, calib_mode: str):
     '''
     Run the interface apppplication.
 
@@ -19,22 +17,24 @@ def execute(config_path: str):
         Path to the TOML config file
     '''
     # Load config
-    cfg, err = config.read(config_path)
-    if err != None:
-        click.echo(f'Failed to load config \'{config_path}\': {err}')
+    config_result = read_config(config_path, True)
+    if config_result.is_err():
+        click.echo(f'Error while reading config: {config_result.error().string()}')
         return
+
+    cfg = config_result.unwrap()
 
     # Check if the user already calibrated the camera via the separate command. If yes, we prompt the user to either use
     # the existing data or re-do the calibration. If no, we prompt the user to do the calibration or exit the
     # application.
-    result = inp.handle_calibration(cfg)
+    result = handle_calibration(cfg, calib_mode)
     if result.is_err():
         click.echo(err.message)
         return
 
     # Create tracker
-    trk = Tracker(cfg, result.unpack())
-    err = trk.start()
+    tracker = Tracker(cfg, result.unwrap())
+    err = tracker.start()
     if err != None:
         click.echo(err.message)
 
@@ -42,8 +42,8 @@ def execute(config_path: str):
     click.echo('Start rendering...')
 
     # Create renderer
-    rdr = Renderer(cfg, trk)
-    err = rdr.start()
+    renderer = Renderer(cfg, tracker)
+    err = renderer.start()
     if err != None:
         click.echo(err.message)
 
