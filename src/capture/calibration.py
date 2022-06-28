@@ -1,4 +1,3 @@
-from typing import Tuple
 import numpy as np
 import cv2 as cv
 import click
@@ -7,8 +6,8 @@ import math
 import time
 import os
 
-from typings.capture.calibration import CharucoCalibrationResult, CalibrationMode
-from typings.error import Error, Err
+from typings.capture.calibration import CharucoCalibrationData, CalibrationMode
+from typings.error import Error, Err, Ok, Result
 
 import config.config as config
 import capture.aruco as aruco
@@ -35,17 +34,15 @@ class Calibration:
         rows = cfg['capture']['calibration']['rows'] + 1
 
         # Create ChArUco board
-        self._board = cv.aruco.CharucoBoard_create(
+        self._board = aruco.board_from(
             cols,
             rows,
-            0.04,
-            0.02,
             self._dict
         )
 
         self._min_response = math.floor(((cols * rows) / 2) * 0.8)
-        self._cfg = cfg['capture']
         self._verbose = verbose
+        self._cfg = cfg
 
         self._image_size = None
         self._corners = []
@@ -79,10 +76,10 @@ class Calibration:
         err : Error
             Returns Error if an error was encountered, None if otherwise
         '''
-        cap = cv.VideoCapture(self._cfg['camera_id'])
+        cap = cv.VideoCapture(self._cfg['capture']['camera_id'])
 
         n = 0
-        while n < self._cfg['calibration']['number_images']:
+        while n < self._cfg['capture']['calibration']['number_images']:
             if self._verbose:
                 click.echo('Capture image {:02d}'.format(n))
 
@@ -96,7 +93,7 @@ class Calibration:
             self._frames.append(frame)
             n += 1
 
-            time.sleep(self._cfg['calibration']['interval'])
+            time.sleep(self._cfg['capture']['calibration']['interval'])
 
         cap.release()
         return None
@@ -135,9 +132,9 @@ class Calibration:
                 return None
                 # TODO (Techassi): Add option to preview the image used and draw the detected markers
 
-        return Err('Failed to detect markers in any of the captured frames')
+        return Error('Failed to detect markers in any of the captured frames')
 
-    def _calibrate(self) -> CharucoCalibrationResult:
+    def _calibrate(self) -> CharucoCalibrationData:
         '''
         Calibrate the camera based on the detected ChArUco board.
 
@@ -158,13 +155,13 @@ class Calibration:
 
         return (cameraMatrix, distCoeffs, rvecs, tvecs)
 
-    def _calibrate_auto(self) -> Tuple[CharucoCalibrationResult, Error]:
+    def _calibrate_auto(self) -> Result[CharucoCalibrationData, Error]:
         '''
         Automatically calibrate the camera and projector setup.
 
         Returns
         -------
-        result : Tuple[CharucoCalibrationResult, Error]
+        result : Result[CharucoCalibrationData, Error]
         '''
         # Setup calibration renderer and start to render
         r = 0
@@ -172,35 +169,37 @@ class Calibration:
         # Capture a set of frames from the capture device (camera)
         err = self._capture(True)
         if err != None:
-            return None, err
+            return Err(Error(err.string()))
 
         # Next detect ArUco markers and ChArUco board
         err = self._detect()
         if err != None:
-            return None, err
+            return Err(Error(err.string()))
 
-        return self._calibrate(), None
+        data = self._calibrate()
+        return Ok(data)
 
-    def _calibrate_semi(self) -> Tuple[CharucoCalibrationResult, Error]:
+    def _calibrate_semi(self) -> Result[CharucoCalibrationData, Error]:
         '''
         Calibrate the camera semi-automatic. This is done by capturing multiple images at an even interval while the
         user moves the ChArUco board manually.
 
         Returns
         -------
-        result : Tuple[CharucoCalibrationResult, Error]
+        result : Result[CharucoCalibrationData, Error]
         '''
         # First capture a set of frames from the capture device (camera)
         err = self._capture(True)
         if err != None:
-            return None, err
+            return Err(Error(err.string()))
 
         # Next detect ArUco markers and ChArUco board
         err = self._detect()
         if err != None:
-            return None, err
+            return Err(Error(err.string()))
 
-        return self._calibrate(), None
+        data = self._calibrate()
+        return Ok(data)
 
     def _calibrate_manual(self):
         '''
@@ -208,7 +207,7 @@ class Calibration:
         '''
         self._capture_manual()
 
-    def calibrate(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Tuple[CharucoCalibrationResult, Error]:
+    def calibrate(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Result[CharucoCalibrationData, Error]:
         '''
         Calibrate the camera via the provided calibration mode.
 
@@ -219,7 +218,7 @@ class Calibration:
 
         Returns
         -------
-        result : Tuple[CharucoCalibrationResult, Error]
+        result : Result[CharucoCalibrationData, Error]
         '''
         match mode:
             case CalibrationMode.AUTO:
@@ -229,9 +228,9 @@ class Calibration:
             case CalibrationMode.MANUAL:
                 return self._calibrate_manual()
             case _:
-                return None, Err('Invalid calibration mode')
+                return Err(Error('Invalid calibration mode'))
 
-    def calibrate_save(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Tuple[CharucoCalibrationResult, Error]:
+    def calibrate_save(self, mode: CalibrationMode = CalibrationMode.AUTO) -> Result[CharucoCalibrationData, Error]:
         '''
         Calibrate the camera via the provided calibration mode. This method additionally saves the calibration data
         in the .data/calib.json file.
@@ -245,32 +244,22 @@ class Calibration:
         -------
         result : Tuple[CharucoCalibrationResult, Error]
         '''
-        result, err = None, None
+        result = self.calibrate(mode)
 
-        match mode:
-            case CalibrationMode.AUTO:
-                result, err = self._calibrate_auto()
-            case CalibrationMode.SEMI_AUTO:
-                result, err = self._calibrate_semi()
-            case CalibrationMode.MANUAL:
-                result, err = self._calibrate_manual()
-            case _:
-                return None, Err('Invalid calibration mode')
+        if result.is_err():
+            return Err(Error('Calibration error: {}'.format(result.error().string())))
 
-        if err != None:
-            return None, err
-
-        file_path = os.path.join(self.cfg['capture']['path'], 'calib.json')
-        json_string = dump_calibration_result(result)
+        file_path = os.path.join(self._cfg['capture']['path'], 'calib.json')
+        json_string = dump_calibration_result(result.unpack())
 
         try:
             file = open(file_path, 'w')
             file.write(json_string)
             file.close()
         except:
-            return None, Err('Failed to save calibration data')
+            return Err(Error('Failed to save calibration data'))
 
-        return result, None
+        return Ok(result)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -285,13 +274,13 @@ class CustomJSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def dump_calibration_result(result: CharucoCalibrationResult) -> str:
+def dump_calibration_result(data: CharucoCalibrationData) -> str:
     '''
     Dump the provided ChArUco calibration result as a JSON string.
 
     Parameters
     ----------
-    result : CharucoCalibrationResult
+    data : CharucoCalibrationResult
         The ChArUco calibration result
 
     Returns
@@ -299,10 +288,10 @@ def dump_calibration_result(result: CharucoCalibrationResult) -> str:
     json : str
         A JSON string of the ChArUco calibration result
     '''
-    return json.dumps(result, cls=CustomJSONEncoder)
+    return json.dumps(data, cls=CustomJSONEncoder)
 
 
-def read_calibration_result(path: str) -> Tuple[CharucoCalibrationResult, Error]:
+def read_calibration_result(path: str) -> Result[CharucoCalibrationData, Error]:
     '''
     Read  ChArUco calibration result data from a JSON formatted file at 'path'.
 
@@ -313,11 +302,11 @@ def read_calibration_result(path: str) -> Tuple[CharucoCalibrationResult, Error]
 
     Returns
     -------
-    result : Tuple[CharucoCalibrationResult, Error]
+    result : Result[CharucoCalibrationData, Error]
     '''
     try:
         file = open(path)
         result = json.load(file)
-        return result, None
+        return Ok(result)
     except:
-        return None, Err('Failed to read calibration data')
+        return Err(Error('Failed to read calibration data'))
