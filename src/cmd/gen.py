@@ -17,10 +17,11 @@ def markers(config_path: str, number: int, res: int):
     res : int
         Width/Height (Resolution) of the ArUco markers in pixels
     '''
-    cfg, err = read_config(config_path)
-    if err != None:
-        click.echo(f'Error while reading config: {err.message}')
+    config_result = read_config(config_path)
+    if config_result.is_err():
+        click.echo(f'Error while reading config: {config_result.error().string()}')
         return
+    cfg = config_result.unwrap()
 
     gen = Generator(cfg)
 
@@ -28,7 +29,7 @@ def markers(config_path: str, number: int, res: int):
 
     err = gen.generate(number, res)
     if err != None:
-        click.echo(f'Error while generating markers: {err.message}')
+        click.echo(f'Error while generating markers: {err.string()}')
         return
 
     click.echo('Saved markers in \'{}\''.format(cfg['capture']['path']))
@@ -36,10 +37,11 @@ def markers(config_path: str, number: int, res: int):
 
 def board(config_path: str, cols: int, rows: int, res_width: int, res_height: int):
     ''''''
-    cfg, err = read_config(config_path)
-    if err != None:
-        click.echo(f'Error while reading config: {err.message}')
+    config_result = read_config(config_path)
+    if config_result.is_err():
+        click.echo(f'Error while reading config: {config_result.error().string()}')
         return
+    cfg = config_result.unwrap()
 
     gen = BoardGenerator(cfg)
 
@@ -47,7 +49,7 @@ def board(config_path: str, cols: int, rows: int, res_width: int, res_height: in
 
     err = gen.generate(cols, rows, res_width, res_height)
     if err != None:
-        click.echo(f'Error while generating markers: {err.message}')
+        click.echo(f'Error while generating markers: {err.string()}')
         return
 
     click.echo('Saved board in \'{}\''.format(cfg['capture']['path']))

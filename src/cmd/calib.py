@@ -1,35 +1,33 @@
 import click
 import os
 
-import capture.calibration as calib
-import config.config as config
-
-import utils.input as inp
+from capture.calibration import Calibration, dump_calibration_result
+from utils.input import confirmation_prompt
+from config.config import read_config
 
 
 def execute(config_path: str, verbose: bool):
     ''''''
-    cfg, err = config.read_config(config_path)
-    if err != None:
+    config_result = read_config(config_path)
+    if config_result.is_err():
         click.echo(f'Error while reading config: {err.message}')
         return
 
-    file_path = os.path.join(cfg['capture']['path'], 'calib.json')
+    cfg = config_result.unwrap()
+    file_path = os.path.join(cfg['capture']['path'], 'calib.pckl')
 
     # Check if we already have a calib.json file
     if os.path.exists(file_path):
-        if not inp.confirmation_prompt('A calibration file already exists. Overide?'):
+        if not confirmation_prompt('A calibration file already exists. Overide?'):
             return
 
-    c = calib.Calibration(cfg, verbose)
+    c = Calibration(cfg, verbose)
 
-    result, err = c._calibrate_auto()
-    if err != None:
-        click.echo(err.message)
+    calib_result = c.calibrate()
+    if calib_result.is_err():
+        click.echo(calib_result.error().string())
         return
 
-    json_string = calib.dump_calibration_result(result)
-
-    file = open(file_path, 'w')
-    file.write(json_string)
-    file.close()
+    err = dump_calibration_result(file_path, calib_result.unwrap())
+    if err != None:
+        click.echo(err.string())
