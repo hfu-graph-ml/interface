@@ -103,14 +103,14 @@ class Renderer(Transformer):
     def _update_markers(self, markers: MarkerCenterList):
         ''''''
         for marker in markers:
-            if marker[2] in [0, 1, 2, 3]:
+            if marker[3] in [0, 1, 2, 3]:
                 continue
 
-            if marker[2] not in self._objects:
-                self.add_object_to_layer_at_index(0, marker[2], Node(marker[0][0], marker[0][1], 20, COLOR_RED))
+            result = self.get_object_on_layer_by_index(0, marker[3])
+            if result.is_err():
+                self.add_object_to_layer_at_index(0, marker[3], Node(marker[1][0], marker[1][1], 20, 'test', COLOR_RED))
             else:
-                # self._objects[marker[2]].update(marker[0][0], marker[0][1])
-                self.get_object_on_layer_by_index(0, marker[2]).update(marker[0][0], marker[0][1])
+                result.unwrap().update(marker[1][0], marker[1][1])
 
     def _prepare(self):
         '''
@@ -133,13 +133,15 @@ class Renderer(Transformer):
 
         self._prepare()
         self.transform_in_intervals()
+
         retrieve = self.subscribe()
 
         # White frame sized width x height
         initial_frame = 255 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
-        frame = np.copy(initial_frame)
 
         while self.running:
+            frame = np.copy(initial_frame)
+
             # First try to retrieve the list of tuples consisting of marker coordinates (position and angle) and IDs.
             # This can faile, because the retrieval of items from the queue can raise the Empty exception when there
             # currently is no item in the queue
@@ -150,7 +152,6 @@ class Renderer(Transformer):
             except:
                 pass
 
-            frame = np.copy(initial_frame)
             super().render(frame, self.transform_matrix, self.transform_width, self.transform_height)
 
             cv.imshow(self.window_name, frame)

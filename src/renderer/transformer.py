@@ -1,7 +1,6 @@
 import numpy as np
 import cv2 as cv
 import threading
-import time
 
 from capture.tracker import Tracker
 from renderer.shared import Shared
@@ -47,7 +46,6 @@ class Transformer(Shared):
         '''
         retrieve = self.subscribe_raw(1)
         while self.running:
-            time.sleep(self.cfg['renderer']['transform_interval'])
             all_img_pts = []
 
             try:
@@ -75,15 +73,16 @@ class Transformer(Shared):
                 if [0] in ids and [1] in ids and [2] in ids and [3] in ids:
                     self.corner_transform[0] = all_img_pts[np.where(ids == [0])[0][0]][1][0]
                     self.corner_transform[1] = all_img_pts[np.where(ids == [1])[0][0]][2][0]
-                    self.corner_transform[2] = all_img_pts[np.where(ids == [3])[0][0]][3][0]
-                    self.corner_transform[3] = all_img_pts[np.where(ids == [2])[0][0]][0][0]
+                    self.corner_transform[2] = all_img_pts[np.where(ids == [2])[0][0]][3][0]
+                    self.corner_transform[3] = all_img_pts[np.where(ids == [3])[0][0]][0][0]
                     self.calc_projection_transform()
-                else:
-                    print('{} Detected corner, but missing'.format(time.strftime('%H:%M:%S', time.localtime())))
+                    print('Done transform')
+                    break
 
             except:
-                print('{} No corners detected'.format(time.strftime('%H:%M:%S', time.localtime())))
                 continue
+
+        self.tracker.unsubscribe(self.raw_subscription_id)
 
     def calc_projection_transform(self):
         ''''''

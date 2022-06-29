@@ -9,13 +9,14 @@ from utils.fmt import fps_to_ms
 
 from typings.capture.aruco import RawRetrieveFunc, RetrieveFunc
 from typings.renderer import RenderLayer, RenderObject
-from typings.error import Error
+from typings.error import Error, Ok, Result
 
 
 class Shared:
     def __init__(self, cfg: Config, tracker: Tracker, window_name: str = 'rendering') -> None:
         self.wait_delay = fps_to_ms(cfg['capture']['fps'])
         self.window_name = window_name
+        self.raw_subscription_id = -1
         self.subscription_id = -1
         self.fullscreen = False
         self.tracker = tracker
@@ -72,7 +73,7 @@ class Shared:
         id, params, retrieve = self.tracker.subscribe_raw(size)
         self.camera_frame_height = params[1]
         self.camera_frame_width = params[0]
-        self.subscription_id = id
+        self.raw_subscription_id = id
 
         return retrieve
 
@@ -128,13 +129,12 @@ class Shared:
 
     def add_object_to_layer_at_index(self, layer_index: int, obj_index: int, obj: RenderObject) -> Error:
         if not layer_index in self.render_layers.keys():
-            return Error('A layer at index {index} does not exist')
-
+            return Error(f'A layer at index {layer_index} does not exist')
         return self.render_layers[layer_index].add_object_by_index(obj_index, obj)
 
-    def get_object_on_layer_by_index(self, layer_index: int, obj_index: int) -> RenderObject:
+    def get_object_on_layer_by_index(self, layer_index: int, obj_index: int) -> Result[RenderObject, Error]:
         if not layer_index in self.render_layers.keys():
-            return Error('A layer at index {index} does not exist')
+            return Error(f'A layer at index {layer_index} does not exist')
 
         return self.render_layers[layer_index].get_object(obj_index)
 
@@ -148,9 +148,12 @@ class Shared:
             # print(f'Render {len(layer._objects)} objects on layer {layer._name}')
             layer.render(frame)
 
+        print(frame.shape)
+
         # Warp
         if matrix.any():
-            cv.warpPerspective(frame, matrix, (width, height))
+            frame = cv.warpPerspective(frame, matrix, (width, height))
+            print(frame.shape)
 
         for layer in remanining:
             layer.render(frame)

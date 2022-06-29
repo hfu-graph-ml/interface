@@ -28,7 +28,7 @@ def execute(config_path: str, calib_mode: str):
     # application.
     calib_result = handle_calibration(cfg, calib_mode)
     if calib_result.is_err():
-        click.echo(err.message)
+        click.echo(calib_result.error().string())
         return
     calib_data = calib_result.unwrap()
 

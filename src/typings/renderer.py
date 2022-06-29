@@ -2,7 +2,7 @@ from enum import Enum, auto, unique
 from typing import Dict, Tuple
 import cv2 as cv
 
-from typings.error import Error
+from typings.error import Err, Error, Ok, Result
 
 
 @unique
@@ -142,15 +142,15 @@ class RenderLayer:
 
     def add_object_by_index(self, index: int, obj: RenderObject) -> Error:
         if index in self._objects.keys():
-            return Error('Object with index {index} already exists on layer {self._name}')
+            return Error(f'Object with index {index} already exists on layer {self._name}')
 
         self._objects[index] = obj
 
-    def get_object(self, index: int) -> RenderObject:
+    def get_object(self, index: int) -> Result[RenderObject, Error]:
         if not index in self._objects.keys():
-            return Error('No object at index {index}')
+            return Err(Error(f'No object at index {index}'))
 
-        return self._objects[index]
+        return Ok(self._objects[index])
 
     def render(self, frame: cv.Mat):
         for obj in self._objects.values():

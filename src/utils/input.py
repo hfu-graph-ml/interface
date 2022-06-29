@@ -59,11 +59,11 @@ def handle_calibration(cfg: Config, mode: str) -> Result[CharucoCalibrationData,
         return Err(result.error())
 
     # Construct calib JSON file path
-    calib_file_path = os.path.join(cfg['capture']['path'], 'calib.json')
+    calib_file_path = os.path.join(cfg['capture']['path'], 'calib.pckl')
 
     # Check if we already have a calib JSON file
     if not os.path.exists(calib_file_path):
-        if confirmation_prompt('No calibration file (.data/calib.json) detected. Run calibration?'):
+        if confirmation_prompt('No calibration file (.data/pckl.json) detected. Run calibration?'):
             c = Calibration(cfg)
             return c.calibrate_save(result.unwrap())
 
