@@ -285,7 +285,7 @@ class Tracker:
                 markers = self._transform_markers_to_borders(corners, ids)
                 sub[1].put(markers)
 
-    def subscribe(self) -> Subscription:
+    def subscribe(self, size: int) -> Subscription:
         '''
         External consumers can subscribe to this tracker to get real-time marker positions.
 
@@ -294,12 +294,12 @@ class Tracker:
         subscription : Subscription
             A tuple consisting of the subscription ID, frame widht and height and the retrieve function
         '''
-        q = Queue()
+        q = Queue(size)
         self._subscribers.append((False, q))
 
         return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
 
-    def subscribe_raw(self) -> RawSubscription:
+    def subscribe_raw(self, size: int) -> RawSubscription:
         '''
         External consumers can subscribe to this tracker to get real-time marker positions. This returns raw tracking
         data instead of cleaned data via the `subscribe` method.
@@ -309,7 +309,7 @@ class Tracker:
         subscription : RawSubscription
             A tuple consisting of the subscription ID, frame widht and height and the retrieve function
         '''
-        q = Queue()
+        q = Queue(size)
         self._subscribers.append((True, q))
 
         return len(self._subscribers) - 1, (self._frame_width, self._frame_height), q.get
