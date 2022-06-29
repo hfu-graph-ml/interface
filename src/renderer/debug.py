@@ -22,38 +22,20 @@ class DebugRenderer(Shared):
     def _get_frame(self) -> Tuple[bool, cv.Mat]:
         ''''''
         if self._use_color:
-            return self._tracker.get_color_frame()
+            return self.tracker.get_color_frame()
 
-        return self._tracker.get_frame()
-
-    def render(self, markers: MarkerBordersList, frame: any):
-        '''
-        Render the detected markers (corners) in the 'frame'.
-
-        Parameters
-        ----------
-        corners : list
-            A list or corners
-        ids : list
-            A list of IDs
-        frame : any
-            The frame to draw in
-        '''
-        for marker in markers:
-            self._draw_borders(marker[0], frame)
-            self._draw_angle(marker[0], marker[2], frame)
-            self._draw_center_point(marker[1], marker[3], frame, with_text=False)
+        return self.tracker.get_frame()
 
     def start(self) -> Error:
         '''
         Start the render loop.
         '''
-        if self._is_running():
+        if self.is_running():
             return Error('Already running')
 
-        retrieve = self._subscribe()
+        retrieve = self.subscribe()
 
-        while self._running:
+        while self.running:
             ok, frame = self._get_frame()
             if not ok:
                 continue
@@ -61,21 +43,21 @@ class DebugRenderer(Shared):
             try:
                 markers = retrieve(False)
                 for marker in markers:
-                    self._draw_borders(marker[0], frame)
-                    self._draw_angle(marker[0], marker[2], frame)
-                    self._draw_center_point(marker[1], marker[3], frame, with_text=False)
+                    self.draw_borders(marker[0], frame)
+                    self.draw_angle(marker[0], marker[2], frame, with_text=False)
+                    self.draw_center_point(marker[1], marker[3], frame)
             except:
                 pass
 
-            cv.imshow(self._window_name, frame)
+            cv.imshow(self.window_name, frame)
 
-            idx = wait.multi_wait_or(self._wait_delay, 'q', 'f')
+            idx = wait.multi_wait_or(self.wait_delay, 'q', 'f')
             if idx == -1:
                 continue
             elif idx == 0:
                 break
             else:
-                self._toggle_fullscreen()
+                self.toggle_fullscreen()
 
         # Cleanup
         self.stop()

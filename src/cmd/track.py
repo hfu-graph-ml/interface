@@ -29,11 +29,12 @@ def execute(config_path: str, calib_mode: str, use_color: bool):
     if calib_result.is_err():
         click.echo(f'Error while calibration: {calib_result.error().string()}')
         return
+    calib_data = calib_result.unwrap()
 
     click.echo('Tracking running in debug mode...')
 
     # Create tracker, force debugging
-    tracker = Tracker(cfg, calib_result.unwrap())
+    tracker = Tracker(cfg, calib_data)
     err = tracker.start()
     if err != None:
         click.echo(err.string())

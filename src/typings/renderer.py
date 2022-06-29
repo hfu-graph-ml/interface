@@ -1,7 +1,8 @@
 from enum import Enum, auto, unique
-from typing import Tuple
-
+from typing import Dict, Tuple
 import cv2 as cv
+
+from typings.error import Error
 
 
 @unique
@@ -127,3 +128,30 @@ class ConfettiParticle(RenderObject):
 
     def __init__(self, x: int, y: int, name: str, scale: float) -> None:
         super().__init__(x, y, name, scale)
+
+
+class RenderLayer:
+    def __init__(self, index: int, name: str, should_warp: bool) -> None:
+        self._objects: Dict[int, RenderObject] = {}
+        self._should_warp = should_warp
+        self._index = index
+        self._name = name
+
+    def add_object(self, obj: RenderObject):
+        self._objects[len(self._objects)] = obj
+
+    def add_object_by_index(self, index: int, obj: RenderObject) -> Error:
+        if index in self._objects.keys():
+            return Error('Object with index {index} already exists on layer {self._name}')
+
+        self._objects[index] = obj
+
+    def get_object(self, index: int) -> RenderObject:
+        if not index in self._objects.keys():
+            return Error('No object at index {index}')
+
+        return self._objects[index]
+
+    def render(self, frame: cv.Mat):
+        for obj in self._objects.values():
+            obj.render(frame)
