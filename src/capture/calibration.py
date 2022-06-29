@@ -1,5 +1,6 @@
 import numpy as np
 import cv2 as cv
+import pickle
 import click
 import json
 import math
@@ -249,32 +250,15 @@ class Calibration:
         if result.is_err():
             return result
 
-        file_path = os.path.join(self._cfg['capture']['path'], 'calib.json')
-        json_string = dump_calibration_result(result.unwrap())
-
-        try:
-            file = open(file_path, 'w')
-            file.write(json_string)
-            file.close()
-        except:
-            return Err(Error('Failed to save calibration data'))
+        file_path = os.path.join(self._cfg['capture']['path'], 'calib.pckl')
+        err = dump_calibration_result(file_path, result.unwrap())
+        if err != None:
+            return Err(err)
 
         return result
 
 
-class CustomJSONEncoder(json.JSONEncoder):
-    '''
-    This custom JSON encoder handles numpy ndarrays by converting them to a list by calling .tolist()
-    '''
-
-    def default(self, o: any) -> any:
-        if isinstance(o, np.ndarray):
-            return o.tolist()
-
-        return super().default(o)
-
-
-def dump_calibration_result(data: CharucoCalibrationData) -> str:
+def dump_calibration_result(path: str, data: CharucoCalibrationData) -> Error:
     '''
     Dump the provided ChArUco calibration result as a JSON string.
 
@@ -288,7 +272,13 @@ def dump_calibration_result(data: CharucoCalibrationData) -> str:
     json : str
         A JSON string of the ChArUco calibration result
     '''
-    return json.dumps(data, cls=CustomJSONEncoder)
+    try:
+        file = open(path, 'wb')
+        pickle.dump(data, file)
+        file.close()
+        return None
+    except:
+        return Error('Failed to dump calibration data')
 
 
 def read_calibration_result(path: str) -> Result[CharucoCalibrationData, Error]:
@@ -305,13 +295,8 @@ def read_calibration_result(path: str) -> Result[CharucoCalibrationData, Error]:
     result : Result[CharucoCalibrationData, Error]
     '''
     try:
-        file = open(path)
-        result = json.load(file)
-
-        # NOTE (Techassi): This is dirty as hell, but is required by OpenCV
-        result[0] = np.array(result[0])
-        result[1] = np.array(result[1])
-
+        file = open(path, 'rb')
+        result = pickle.load(file)
         return Ok(result)
     except:
         return Err(Error('Failed to read calibration data'))
