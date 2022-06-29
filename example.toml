@@ -25,5 +25,6 @@ fps = 60
   cols = 3
 
 [renderer]
+transform_interval = 1
 height = 1080
 width = 1920

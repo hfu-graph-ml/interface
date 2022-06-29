@@ -44,6 +44,7 @@ class CaptureOptions(TypedDict):
 
 
 class RendererOptions(TypedDict):
+    transform_interval: float
     height: int
     width: int
 
@@ -84,7 +85,7 @@ def read_config(path: str, auto_validate: bool = False) -> Result[Config, Error]
 
         err = validate(config)
         if err != None:
-            return Err(Error(err.string()))
+            return Err(err)
 
         return Ok(config)
 
@@ -107,48 +108,51 @@ def validate(cfg: Config) -> Error:
         Non None if validation failed
     '''
     if not cfg['backend']['host']:
-        return Err('Invalid host')
+        return Error('Invalid host')
 
     if cfg['backend']['port'] < 0 or cfg['backend']['port'] > 65535:
-        return Err('Invalid port')
+        return Error('Invalid port')
 
     if cfg['capture']['camera_id'] < 0:
-        return Err('Invalid camera device ID')
+        return Error('Invalid camera device ID')
 
     if cfg['capture']['fps'] < 0:
-        return Err('Invalid FPS')
+        return Error('Invalid FPS')
 
     if not checks.is_in(cfg['capture']['aruco']['uniques'], ARUCO_ALLOWED_UNIQUES):
-        return Err(f'Invalid ArUco uniques number. Allowed are: {ARUCO_ALLOWED_UNIQUES}')
+        return Error(f'Invalid ArUco uniques number. Allowed are: {ARUCO_ALLOWED_UNIQUES}')
 
     if not checks.is_in(cfg['capture']['aruco']['size'], ARUCO_ALLOWED_SIZES):
-        return Err(f'Invalid ArUco size. Allowed are: {ARUCO_ALLOWED_SIZES}')
+        return Error(f'Invalid ArUco size. Allowed are: {ARUCO_ALLOWED_SIZES}')
 
     if cfg['capture']['tracker']['max_failed_read'] < 0:
-        return Err('Invalid max failed read amount')
+        return Error('Invalid max failed read amount')
 
     if cfg['capture']['calibration']['number_images'] <= 0:
-        return Err('Invalid number of calibration images. Choose value > 0. More than 5 recommended')
+        return Error('Invalid number of calibration images. Choose value > 0. More than 5 recommended')
 
     if cfg['capture']['calibration']['interval'] <= 0:
-        return Err('Invalid calibration interval. Choose value > 0')
+        return Error('Invalid calibration interval. Choose value > 0')
 
     if cfg['capture']['calibration']['height'] < 0:
-        return Err('Invalid calibration board height')
+        return Error('Invalid calibration board height')
 
     if cfg['capture']['calibration']['width'] < 0:
-        return Err('Invalid calibration board width')
+        return Error('Invalid calibration board width')
 
     if cfg['capture']['calibration']['rows'] < 0:
-        return Err('Invalid calibration board row count')
+        return Error('Invalid calibration board row count')
 
     if cfg['capture']['calibration']['cols'] < 0:
-        return Err('Invalid calibration board col count')
+        return Error('Invalid calibration board col count')
+
+    if cfg['renderer']['transform_interval'] <= 0:
+        return Error('Invalid transform interval. Choose value > 0')
 
     if cfg['renderer']['height'] < 0:
-        return Err('Invalid renderer height')
+        return Error('Invalid renderer height')
 
     if cfg['renderer']['width'] < 0:
-        return Err('Invalid renderer width')
+        return Error('Invalid renderer width')
 
     return None
