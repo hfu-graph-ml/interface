@@ -247,7 +247,7 @@ class Calibration:
         result = self.calibrate(mode)
 
         if result.is_err():
-            return Err(Error('Calibration error: {}'.format(result.error().string())))
+            return result
 
         file_path = os.path.join(self._cfg['capture']['path'], 'calib.json')
         json_string = dump_calibration_result(result.unwrap())
@@ -259,7 +259,7 @@ class Calibration:
         except:
             return Err(Error('Failed to save calibration data'))
 
-        return Ok(result)
+        return result
 
 
 class CustomJSONEncoder(json.JSONEncoder):
