@@ -53,7 +53,7 @@ class Tracker:
 
         # ArUco marker related values
         self._dict = cv.aruco.Dictionary_get(t)
-        self._board = aruco.board_from(2, 2, self._dict, marker_length=0.09, marker_separation=0.01)
+        self._board = aruco.board_from(3, 3, self._dict, marker_length=0.09, marker_separation=0.01)
         self._path = cfg['capture']['path']
         self._type = t
 
@@ -61,6 +61,7 @@ class Tracker:
         self._delay = fmt.fps_to_ms(cfg['capture']['fps'])
         self._camera_id = cfg['capture']['camera_id']
         self._subscribers: List[Subscriber] = []
+        self.found_rect = False
 
         # Current frames
         self._color_frame = np.array([])
@@ -221,7 +222,6 @@ class Tracker:
             )
 
             if len(corners) > 0:
-                # markers = self._transform_markers_to_center(corners, ids)
                 self.notify(corners, ids, rejected, recovered)
 
         # Cleanup

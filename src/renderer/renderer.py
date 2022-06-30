@@ -1,3 +1,4 @@
+from queue import Empty
 from typing import Dict, List, Tuple
 import numpy as np
 import cv2 as cv
@@ -103,16 +104,17 @@ class Renderer(Transformer):
     def _update_markers(self, markers: MarkerCenterList):
         ''''''
         for marker in markers:
-            if marker[3] in [0, 1, 2, 3]:
+            if marker[2] in [0, 1, 2, 3]:
                 continue
 
-            result = self.get_object_on_layer_by_index(0, marker[3])
+            result = self.get_object_on_layer_by_index(0, marker[2])
+            print(result.is_err())
             if result.is_err():
-                self.add_object_to_layer_at_index(0, marker[3], Node(marker[1][0], marker[1][1], 20, 'test', COLOR_RED))
+                self.add_object_to_layer_at_index(0, marker[2], Node(marker[0][0], marker[0][1], 20, 'test', COLOR_RED))
             else:
-                result.unwrap().update(marker[1][0], marker[1][1])
+                result.unwrap().update(marker[0][0], marker[0][1])
 
-    def _prepare(self):
+    def _initialize(self):
         '''
         Prepare multiple things before starting the renderer.
         '''
@@ -131,13 +133,61 @@ class Renderer(Transformer):
         if self.is_running():
             return Error('Already running')
 
-        self._prepare()
-        self.transform_in_intervals()
+        self._initialize()
 
-        retrieve = self.subscribe()
+        retrieve = self.subscribe_raw()
 
         # White frame sized width x height
         initial_frame = 255 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
+        initial_frame_black = 0 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
+        ref_frame = np.copy(initial_frame)
+        super().render(ref_frame, self.transform_matrix, self.transform_width, self.transform_height)
+        params = cv.aruco.DetectorParameters_create()
+
+        markerCorners, markerIds, _ = cv.aruco.detectMarkers(
+            ref_frame,
+            self.dict,
+            parameters=params
+        )
+        if len(markerCorners) == 4:
+            ret, charucoCorners, charucoIds = cv.aruco.interpolateCornersCharuco(
+                markerCorners,
+                markerIds,
+                ref_frame,
+                self.board
+            )
+            print(charucoCorners.shape)
+
+        cv.namedWindow('reference', cv.WINDOW_NORMAL)
+        cv.setWindowProperty('reference', cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
+
+        while self.running:
+            cv.imshow('reference', ref_frame)
+
+            try:
+                (corners, ids, rejected, recovered) = retrieve(False)
+                ref_points = self.get_reference_corners(corners, ids)
+                if not ref_points.any():
+                    continue
+                m = cv.getPerspectiveTransform(ref_points, charucoCorners)
+                if m.any():
+                    self.transform_matrix = m
+                    cv.destroyWindow('reference')
+                    break
+
+            except Empty:
+                pass
+            except Exception as e:
+                print(e)
+                break
+
+            idx = wait.multi_wait_or(self.wait_delay, 'q', 'f')
+            if idx == -1:
+                continue
+            elif idx == 0:
+                break
+            else:
+                self.toggle_fullscreen()
 
         while self.running:
             frame = np.copy(initial_frame)
@@ -146,13 +196,18 @@ class Renderer(Transformer):
             # This can faile, because the retrieval of items from the queue can raise the Empty exception when there
             # currently is no item in the queue
             try:
-                markers = retrieve(False)
-                print(len(markers))
+                (corners, ids, _, _) = retrieve(False)
+                markers = self.tracker._transform_markers_to_center(corners, ids)
                 self._update_markers(markers)
-            except:
+            except Empty:
                 pass
+            except Exception as e:
+                print(e)
+                break
 
-            super().render(frame, self.transform_matrix, self.transform_width, self.transform_height)
+            super().render(frame, self.transform_matrix, self._frame_width, self._frame_width)
+            frame = cv.warpPerspective(frame, self.transform_matrix, (self._frame_width, self._frame_width))
+            print(frame.shape)
 
             cv.imshow(self.window_name, frame)
 
@@ -166,5 +221,4 @@ class Renderer(Transformer):
 
         # Cleanup
         self.stop()
-        self.transform_thread.join()
         return None

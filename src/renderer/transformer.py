@@ -2,16 +2,29 @@ import numpy as np
 import cv2 as cv
 import threading
 
+from capture.aruco import board_from, dict_from, type_from
 from capture.tracker import Tracker
 from renderer.shared import Shared
 from config.config import Config
 
 from typings.capture.calibration import CharucoCalibrationData
+from typings.capture.aruco import CornerList, IDList
 
 
 class Transformer(Shared):
     def __init__(self, cfg: Config, calib_data: CharucoCalibrationData, tracker: Tracker) -> None:
         super().__init__(cfg, tracker)
+
+        typ = type_from(
+            cfg['capture']['aruco']['size'],
+            cfg['capture']['aruco']['uniques']
+        )
+        t, ok = dict_from(typ)
+        if not ok:
+            raise Exception('Failed to instantiate Tracker object')
+
+        self.dict = cv.aruco.Dictionary_get(t)
+        self.board = board_from(3, 3, self.dict, marker_length=0.09, marker_separation=0.01)
 
         self.corner_transform = np.zeros((4, 2), dtype="float32")
         self.transform_matrix = np.zeros([])
@@ -19,7 +32,7 @@ class Transformer(Shared):
         self.transform_height = 0
         self.transform_width = 0
 
-        self._axis = np.float32([
+        self.axis = np.float32([
             [-.5, -.5, 0],
             [-.5, .5, 0],
             [.5, .5, 0],
@@ -29,6 +42,41 @@ class Transformer(Shared):
             [.5, .5, 1],
             [.5, -.5, 1]
         ])
+
+    def get_reference_corners(self, corners: CornerList, ids: IDList):
+        '''
+        This function receives a variable number of marker corner coordinates. If there are at least 4 markers, this
+        tries to find the rectangle framed by four corner morkers.
+        '''
+        if len(corners) < 4:
+            return np.array([])
+
+        rect_corner_corners = []
+        rect_corner_ids = []
+
+        for c in zip(corners, ids):
+            if c[1] in [0, 1, 2, 3]:
+                rect_corner_corners.append(c[0])
+                rect_corner_ids.append(c[1])
+
+        if len(rect_corner_corners) != 4:
+            return np.array([])
+
+        ok, frame = self.tracker.get_frame()
+        if not ok:
+            return np.array([])
+
+        ret, proj_corners, proj_ids = cv.aruco.interpolateCornersCharuco(
+            rect_corner_corners,
+            np.array(rect_corner_ids),
+            frame,
+            self.board
+        )
+
+        if ret != 4:
+            return np.array([])
+
+        return proj_corners
 
     def transform_in_intervals(self):
         '''
@@ -62,7 +110,7 @@ class Transformer(Shared):
                 for rvec, tvec in zip(rvecs, tvecs):
                     try:
                         img_pts, jacobian = cv.projectPoints(
-                            self._axis, rvec, tvec,
+                            self.axis, rvec, tvec,
                             self.calib_data[0],
                             self.calib_data[1]
                         )

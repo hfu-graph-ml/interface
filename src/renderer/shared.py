@@ -148,12 +148,10 @@ class Shared:
             # print(f'Render {len(layer._objects)} objects on layer {layer._name}')
             layer.render(frame)
 
-        print(frame.shape)
-
         # Warp
         if matrix.any():
-            frame = cv.warpPerspective(frame, matrix, (width, height))
-            print(frame.shape)
+            # frame = cv.warpPerspective(frame, matrix, (width, height))
+            pass
 
         for layer in remanining:
             layer.render(frame)
