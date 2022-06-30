@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 import cv2 as cv
 import threading
@@ -32,6 +33,9 @@ class Transformer(Shared):
         self.transform_height = 0
         self.transform_width = 0
 
+        self.scaling_x = 1
+        self.scaling_y = 1
+
         self.axis = np.float32([
             [-.5, -.5, 0],
             [-.5, .5, 0],
@@ -42,6 +46,30 @@ class Transformer(Shared):
             [.5, .5, 1],
             [.5, -.5, 1]
         ])
+
+    def get_reference_scaling_naive(self, corners: CornerList, ids: IDList, width: int, height: int) -> Tuple[float, float]:
+        ''''''
+        if len(corners) < 4:
+            return ()
+
+        pairs = []
+        for c in zip(corners, ids):
+            if c[1][0] in [0, 1, 2, 3]:
+                pairs.append((c[0][0], c[1][0]))
+
+        pairs = sorted(pairs, key=lambda x: x[1])
+
+        # Calc width scaling
+        top_width = pairs[1][0][0][0] - pairs[0][0][0][0]
+        bot_width = pairs[2][0][0][0] - pairs[3][0][0][0]
+        avg_width = (top_width + bot_width) / 2
+
+        # Calc heigth scaling
+        left_height = pairs[3][0][0][1] - pairs[0][0][0][1]
+        right_height = pairs[2][0][0][1] - pairs[1][0][0][1]
+        avg_height = (left_height + right_height) / 2
+
+        return (width / avg_width, height / avg_height)
 
     def get_reference_corners(self, corners: CornerList, ids: IDList):
         '''

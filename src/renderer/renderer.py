@@ -108,11 +108,11 @@ class Renderer(Transformer):
                 continue
 
             result = self.get_object_on_layer_by_index(0, marker[2])
-            print(result.is_err())
             if result.is_err():
-                self.add_object_to_layer_at_index(0, marker[2], Node(marker[0][0], marker[0][1], 20, 'test', COLOR_RED))
+                self.add_object_to_layer_at_index(0, marker[2], Node(
+                    int(marker[0][0] * self.scaling_x), int(marker[0][1] * self.scaling_y), 20, 'test', COLOR_RED))
             else:
-                result.unwrap().update(marker[0][0], marker[0][1])
+                result.unwrap().update(int(marker[0][0] * self.scaling_x), int(marker[0][1] * self.scaling_y))
 
     def _initialize(self):
         '''
@@ -139,7 +139,6 @@ class Renderer(Transformer):
 
         # White frame sized width x height
         initial_frame = 255 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
-        initial_frame_black = 0 * np.ones((self._frame_height, self._frame_width, 3), dtype=np.uint8)
         ref_frame = np.copy(initial_frame)
         super().render(ref_frame, self.transform_matrix, self.transform_width, self.transform_height)
         params = cv.aruco.DetectorParameters_create()
@@ -166,15 +165,12 @@ class Renderer(Transformer):
 
             try:
                 (corners, ids, rejected, recovered) = retrieve(False)
-                ref_points = self.get_reference_corners(corners, ids)
-                if not ref_points.any():
-                    continue
-                m = cv.getPerspectiveTransform(ref_points, charucoCorners)
-                if m.any():
-                    self.transform_matrix = m
+                scaling = self.get_reference_scaling_naive(corners, ids, self._frame_width, self._frame_height)
+                if len(scaling) == 2:
+                    self.scaling_x = scaling[0]
+                    self.scaling_y = scaling[1]
                     cv.destroyWindow('reference')
                     break
-
             except Empty:
                 pass
             except Exception as e:
@@ -206,8 +202,8 @@ class Renderer(Transformer):
                 break
 
             super().render(frame, self.transform_matrix, self._frame_width, self._frame_width)
-            frame = cv.warpPerspective(frame, self.transform_matrix, (self._frame_width, self._frame_width))
-            print(frame.shape)
+            # frame = cv.warpPerspective(frame, self.transform_matrix, (self._frame_width, self._frame_width))
+            # print(frame.shape)
 
             cv.imshow(self.window_name, frame)
 
