@@ -52,16 +52,16 @@ class Renderer(Transformer):
         Parameters
         ----------
         corner : Corner
-            Which corner to calculate
+            Which corner to calculate.
         mat : cv.Mat
-            The mat which should be placed. Used for size
+            The mat which should be placed. Used for size.
         scale : float
-            The scaling (default: 1.0, no scaling)
+            The scaling (default: 1.0, no scaling).
 
         Returns
         -------
         coords : Tuple[int, int]
-            A tuple of x, y integer values
+            A tuple of x, y integer values.
         '''
         match corner:
             case Corner.TOP_LEFT:
@@ -102,7 +102,14 @@ class Renderer(Transformer):
         self.add_object_to_layer(10, ArUcoMarker(y, x, self._marker_images[3], '', 0.5))
 
     def _update_markers(self, markers: MarkerCenterList):
-        ''''''
+        '''
+        Update the amrker objects in the render tree.
+
+        Parameters
+        ----------
+        markers : MarkerCenterList
+            List of markers.
+        '''
         for marker in markers:
             if marker[2] in [0, 1, 2, 3]:
                 continue

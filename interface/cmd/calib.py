@@ -7,7 +7,6 @@ from config.config import read_config
 
 
 def execute(config_path: str, verbose: bool):
-    ''''''
     config_result = read_config(config_path)
     if config_result.is_err():
         click.echo(f'Error while reading config: {err.message}')

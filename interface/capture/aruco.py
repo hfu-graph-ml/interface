@@ -60,7 +60,27 @@ def dict_from(k: str) -> Tuple[int, bool]:
 
 
 def board_from(cols: int, rows: int, dict: int, marker_length: float = 0.04, marker_separation: float = 0.02):
-    ''''''
+    '''
+    Returns a ChArUco chessboard with size `cols` x `rows` and `dict`.
+
+    Parameters
+    ----------
+    cols : int
+        Number of columns.
+    rows : int
+        Number of rows.
+    dict : int
+        Unique ArUco dict identifier. Use with `dict_from`.
+    marker_length : float
+        Chessboard square side length (normally in meters).
+    marker_separation : float
+        Marker side length (same unit than `marker_length`).
+
+    Returns
+    -------
+    board : CharucoBoard
+        The generated ChArUco chessboard.
+    '''
     return cv.aruco.CharucoBoard_create(
         cols,
         rows,

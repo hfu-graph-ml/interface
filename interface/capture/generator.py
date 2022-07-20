@@ -33,20 +33,20 @@ class Generator:
         Parameters
         ----------
         number : int
-            Number of ArUco markers to generate
+            Number of ArUco markers to generate.
         res : int
-            Resolution of the markers in pixels (e.g. 300x300)
+            Resolution of the markers in pixels (e.g. 300x300).
         usage : Usage
-            For which purpose the marker will be used (calibration or as nodes)
+            For which purpose the marker will be used (calibration or as nodes).
         start_id : int
             The ID (index) to start at. This is usefull when generating
             calibration and node markers at the same time. This prevents
-            duplicate IDs
+            duplicate IDs.
 
         Returns
         -------
         err : Error
-            None if no error occured
+            None if no error occured.
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
@@ -115,18 +115,18 @@ class BoardGenerator():
         Parameters
         ----------
         cols : int
-            The number of columns
+            The number of columns.
         rows : int
-            The number of rows
+            The number of rows.
         res_width : int
-            Width of the generated image in pixels
+            Width of the generated image in pixels.
         res_height : int
-            Height of the generated image in pixels
+            Height of the generated image in pixels.
 
         Returns
         -------
         err : Error
-            Non None if error occured
+            Non None if error occured.
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:

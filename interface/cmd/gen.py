@@ -5,18 +5,6 @@ from config.config import read_config
 
 
 def markers(config_path: str, number: int, res: int):
-    '''
-    Generate a variable amount of ArUco markers and save them to disk.
-
-    Parameters
-    ----------
-    config_path : str
-        Path to the TOML config file
-    num : int
-        Number of ArUco markers to generate
-    res : int
-        Width/Height (Resolution) of the ArUco markers in pixels
-    '''
     config_result = read_config(config_path)
     if config_result.is_err():
         click.echo(f'Error while reading config: {config_result.error().string()}')
@@ -36,7 +24,6 @@ def markers(config_path: str, number: int, res: int):
 
 
 def board(config_path: str, cols: int, rows: int, res_width: int, res_height: int):
-    ''''''
     config_result = read_config(config_path)
     if config_result.is_err():
         click.echo(f'Error while reading config: {config_result.error().string()}')

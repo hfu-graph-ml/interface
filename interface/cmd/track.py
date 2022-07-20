@@ -7,14 +7,6 @@ from capture.tracker import Tracker
 
 
 def execute(config_path: str, calib_mode: str, use_color: bool):
-    '''
-    Run debug tracking only.
-
-    Parameters
-    ----------
-    config_path : str
-        Path to the TOML config file
-    '''
     click.echo('Reading TOML config file...')
 
     config_result = read_config(config_path, True)

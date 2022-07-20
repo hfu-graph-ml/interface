@@ -24,7 +24,7 @@ class Client:
         Parameters
         ----------
         cfg : config.Config
-            The config
+            The config.
         '''
         if not cfg:
             raise ValueError
@@ -40,16 +40,16 @@ class Client:
         Parameters
         ----------
         paths : tuple[str, ...]
-            Variable number of path segments
+            Variable number of path segments.
         params : dict
-            A dict of query parameters (Default: {})
+            A dict of query parameters (Default: {}).
         data : any
-            Request body data (Default: None)
+            Request body data (Default: None).
 
         Returns
         -------
         result : Result
-            Result object
+            Result object.
         '''
         url = fmt.url_from(self.base_url, paths)
         if not url:
@@ -72,16 +72,16 @@ class Client:
         Parameters
         ----------
         paths : tuple[str, ...]
-            Variable number of path segments
+            Variable number of path segments.
         params : dict
-            A dict of query parameters (Default: {})
+            A dict of query parameters (Default: {}).
         data : any
-            Request body data (Default: None)
+            Request body data (Default: None).
 
         Returns
         -------
         result : Result
-            Result object
+            Result object.
         '''
         url = fmt.url_from(self.base_url, paths)
         if not url:
@@ -104,7 +104,7 @@ class Client:
         Returns
         -------
         result: Tuple[Graph, Error]
-            Returns the graph data. If error is not None, an error occured and should be handled
+            Returns the graph data. If error is not None, an error occured and should be handled.
         '''
         res = self._get('graphs')
         if res.is_error():
@@ -120,12 +120,12 @@ class Client:
         Parameters
         ----------
         data : Graph
-            The updated graph data
+            The updated graph data.
 
         Returns
         -------
         res : BaseResponse
-            A response indicating the success
+            A response indicating the success.
         '''
         if not data:
             return None, Error('Missing updated graph data')

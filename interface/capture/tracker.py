@@ -35,9 +35,9 @@ class Tracker:
         Parameters
         ----------
         cfg : config.Config
-            Configuration data
+            Configuration data.
         calib_data : CharucoCalibrationData
-            Camera calibration data
+            Camera calibration data.
         '''
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
@@ -83,7 +83,7 @@ class Tracker:
         Returns
         -------
         values : Tuple[any, any, int]
-            The capture device, ArUco detection params and wait delay
+            The capture device, ArUco detection params and wait delay.
         '''
         params = cv.aruco.DetectorParameters_create()
         cap = cv.VideoCapture(self._camera_id)
@@ -105,7 +105,7 @@ class Tracker:
         Returns
         -------
         running: bool
-            If renderer is running
+            If renderer is running.
         '''
         if self._running:
             return True
@@ -121,28 +121,43 @@ class Tracker:
         Parameters
         ----------
         corner_list : CornerList
-            A lsit of corners
+            A list of corners.
         ids : IDList
-            A list of IDs
+            A list of IDs.
 
         Returns
         -------
         marker_list : MarkerCenterList
-            A list of markers
+            A list of markers.
         '''
         marker_list: MarkerCenterList = []
         for i, corners_per_marker in enumerate(corner_list):
             if len(corners_per_marker[0]) != 4:
                 continue
 
-            pos = self._extract_center_position(corners_per_marker[0])
-            ang = self._extract_angle(corners_per_marker[0], pos)
-            marker_list.append((pos, ang, ids[i][0]))
+            center = self._extract_center_position(corners_per_marker[0])
+            angle = self._extract_angle(corners_per_marker[0], center)
+            marker_list.append((center, angle, ids[i][0]))
 
         return marker_list
 
     def _transform_markers_to_borders(self, corner_list: CornerList, ids: IDList) -> MarkerBordersList:
-        ''''''
+        '''
+        This functions transforms the list or corners and the list of IDs into a combined list of tuples consisting
+        of corner positions <x,y>, the center position <x,y>, the rotation angle and the ID.
+
+        Parameters
+        ----------
+        corner_list : CornerList
+            A list of corners.
+        ids : IDList
+            A list of IDs.
+
+        Returns
+        -------
+        marker_list : MarkerBordersList
+            A list of markers.
+        '''
         marker_list: MarkerBordersList = []
         for i, corners_per_marker in enumerate(corner_list):
             if len(corners_per_marker[0]) != 4:
@@ -156,7 +171,19 @@ class Tracker:
         return marker_list
 
     def _extract_center_position(self, corners: Corners) -> Tuple[int, int]:
-        ''''''
+        '''
+        Extract the marker center position based on the top-left and bottom-right corner.
+
+        Parameters
+        ----------
+        corners : Corners
+            List or corners.
+
+        Returns
+        -------
+        pos : Tuple[int, int]
+            Marker center position <x,y>
+        '''
         center_x = int((corners[0][0] + corners[2][0]) / 2)
         center_y = int((corners[0][1] + corners[2][1]) / 2)
 
@@ -165,8 +192,25 @@ class Tracker:
     def _extract_borders(
         self,
         corners: Corners
-    ) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
-        ''''''
+    ) -> Tuple[
+        Tuple[int, int],
+        Tuple[int, int],
+        Tuple[int, int],
+        Tuple[int, int]
+    ]:
+        '''
+        Extract marker corners. Basically this function only converts the position values from floats to integers.
+
+        Parameters
+        ----------
+        corners : Corners
+            List of corners.
+
+        Returns
+        -------
+        borders : Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+            A 4 tuple of corner positions <x,y>.
+        '''
         (tl, tr, br, bl) = corners
         # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
         return (int(tl[0]), int(tl[1])), (int(tr[0]), int(tr[1])), (int(br[0]), int(br[1])), (int(bl[0]), int(bl[1]))
@@ -176,6 +220,18 @@ class Tracker:
         Extract the angle from a single marker. The angle gets calculated by first calculating the vector between the
         center position and the top left corner position. Then we calculate the length to then calculate the unit vector
         which then can be used to calculate the angle by using arcsin.
+
+        Parameters
+        ----------
+        corners : Corners
+            List of corners.
+        center : Tuple[int, int]
+            Marker center position <x,y>.
+
+        Returns
+        -------
+        angle : float
+            The calculated angle of the marker.
         '''
         x, y = center[0] - corners[0][0], center[1] - corners[0][1]  # Vec from center to top left corner
         len = math.sqrt(math.pow(x, 2) + math.pow(y, 2))  # Calculate length of vec
@@ -189,7 +245,7 @@ class Tracker:
         Returns
         -------
         err : Error
-            Non None if an error occured
+            Non None if an error occured.
         '''
         self._running = True
 
@@ -228,9 +284,29 @@ class Tracker:
         cap.release()
 
     def get_frame(self) -> Tuple[bool, cv.Mat]:
+        '''
+        Get the current gray scale frame from the tracker.
+
+        Returns
+        -------
+        ok : bool
+            If current frame is available.
+        frame : cv.Mat
+            Current frame.
+        '''
         return self._frame.any(), self._frame
 
     def get_color_frame(self) -> Tuple[bool, cv.Mat]:
+        '''
+        Get the current color frame from the tracker.
+
+        Returns
+        -------
+        ok : bool
+            If current frame is available.
+        frame : cv.Mat
+            Current frame.
+        '''
         return self._frame.any(), self._color_frame
 
     def start(self) -> Error:
@@ -240,7 +316,7 @@ class Tracker:
         Returns
         -------
         err : Error
-            Non None if an error occured
+            Non None if an error occured.
         '''
         if self._is_running():
             return Err('Already running')
@@ -269,13 +345,13 @@ class Tracker:
         Parameters
         ----------
         corners : CornerList
-            A list of corners of detected markers
+            A list of corners of detected markers.
         ids : IDList
-            A list of detected marker IDs
+            A list of detected marker IDs.
         rejected
-            A list of rejected markers
+            A list of rejected markers.
         recovered
-            A list of recovered markers
+            A list of recovered markers.
         '''
         for sub in self._subscribers:
             # If the subription is raw, just pass raw values without any processing
@@ -292,7 +368,7 @@ class Tracker:
         Returns
         -------
         subscription : Subscription
-            A tuple consisting of the subscription ID, frame widht and height and the retrieve function
+            A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((False, q))
@@ -307,7 +383,7 @@ class Tracker:
         Returns
         -------
         subscription : RawSubscription
-            A tuple consisting of the subscription ID, frame widht and height and the retrieve function
+            A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((True, q))
@@ -321,12 +397,12 @@ class Tracker:
         Parameters
         ----------
         index : int
-            The subscription ID
+            The subscription ID.
 
         Returns
         -------
         err : Error
-            Non None if an error occured
+            Non None if an error occured.
         '''
         if index < 0 or index > len(self._subscribers) - 1:
             return Err('Invalid index')
