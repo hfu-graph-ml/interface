@@ -1,8 +1,7 @@
-from queue import Empty
 from typing import Dict, List, Tuple
+from queue import Empty
 import numpy as np
 import cv2 as cv
-import time
 import glob
 import os
 
@@ -49,18 +48,12 @@ class Renderer(Transformer):
         '''
         Calculate corner coordinates based on the size and scaling of the provided mat.
 
-        Parameters
-        ----------
-        corner : Corner
-            Which corner to calculate.
-        mat : cv.Mat
-            The mat which should be placed. Used for size.
-        scale : float
-            The scaling (default: 1.0, no scaling).
+        Args:
+            corner: Which corner to calculate.
+            mat: The mat which should be placed. Used for size.
+            scale: The scaling (default: 1.0, no scaling).
 
-        Returns
-        -------
-        coords : Tuple[int, int]
+        Returns:
             A tuple of x, y integer values.
         '''
         match corner:
@@ -105,10 +98,8 @@ class Renderer(Transformer):
         '''
         Update the amrker objects in the render tree.
 
-        Parameters
-        ----------
-        markers : MarkerCenterList
-            List of markers.
+        Args:
+            markers: List of markers.
         '''
         for marker in markers:
             if marker[2] in [0, 1, 2, 3]:

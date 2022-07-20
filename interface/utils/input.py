@@ -11,17 +11,12 @@ def confirmation_prompt(text: str, default: bool | None = False) -> bool:
     '''
     This displays a confirmation prompt in which the user has to select 'y' or 'n'.
 
-    Parameters
-    ----------
-    text : str
-        The text message to display
-    default : bool | None
-        The default value returned. If None the user HAS to select either 'y' or 'n'
+    Args:.
+        text: The text message to display
+        default: The default value returned. If None the user HAS to select either 'y' or 'n'.
 
-    Returns
-    -------
-    result : bool
-        True if input is 'y' or False if input is 'n'
+    Returns:
+        True if input is 'y' or False if input is 'n'.
     '''
     valid = False
     text = '{} [{}]: '.format(text, "y/n" if default is None else ("Y/n" if default else "y/N"))
@@ -43,14 +38,10 @@ def handle_calibration(cfg: Config, mode: str) -> Result[CharucoCalibrationData,
     asked to run the calibration. Denying this prompt exists the program. If a JSON file already exists the user is
     prompted if the file should be overwritten. If not, the existing JSON file gets used.
 
-    Parameters
-    ----------
-    cfg : Config
-        Config data
+    Args:
+        cfg: Config data
 
-    Returns
-    -------
-    result : Result[CharucoCalibrationData, Error]
+    Returns:
         Calibration data or error
     '''
     # First we try to convert the provided mode (string) into an enum

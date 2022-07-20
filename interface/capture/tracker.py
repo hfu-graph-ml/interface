@@ -32,12 +32,9 @@ class Tracker:
         '''
         Create a new tracker instance.
 
-        Parameters
-        ----------
-        cfg : config.Config
-            Configuration data.
-        calib_data : CharucoCalibrationData
-            Camera calibration data.
+        Args:
+        cfg: Configuration data.
+        calib_data: Camera calibration data.
         '''
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
@@ -80,10 +77,8 @@ class Tracker:
         '''
         Setup ArUco detection params, capture device and wait delay.
 
-        Returns
-        -------
-        values : Tuple[any, any, int]
-            The capture device, ArUco detection params and wait delay.
+        Returns:
+        values: The capture device, ArUco detection params and wait delay.
         '''
         params = cv.aruco.DetectorParameters_create()
         cap = cv.VideoCapture(self._camera_id)
@@ -102,8 +97,7 @@ class Tracker:
         '''
         Returns if the renderer is already running.
 
-        Returns
-        -------
+        Returns:
         running: bool
             If renderer is running.
         '''
@@ -118,17 +112,12 @@ class Tracker:
         This functions transforms the list or corners and the list of IDs into a combined list of tuples consisting
         of the center position <x,y>, the rotation angle and the ID.
 
-        Parameters
-        ----------
-        corner_list : CornerList
-            A list of corners.
-        ids : IDList
-            A list of IDs.
+        Args:
+        corner_list: A list of corners.
+        ids: A list of IDs.
 
-        Returns
-        -------
-        marker_list : MarkerCenterList
-            A list of markers.
+        Returns:
+        marker_list: A list of markers.
         '''
         marker_list: MarkerCenterList = []
         for i, corners_per_marker in enumerate(corner_list):
@@ -146,17 +135,12 @@ class Tracker:
         This functions transforms the list or corners and the list of IDs into a combined list of tuples consisting
         of corner positions <x,y>, the center position <x,y>, the rotation angle and the ID.
 
-        Parameters
-        ----------
-        corner_list : CornerList
-            A list of corners.
-        ids : IDList
-            A list of IDs.
+        Args:
+        corner_list: A list of corners.
+        ids: A list of IDs.
 
-        Returns
-        -------
-        marker_list : MarkerBordersList
-            A list of markers.
+        Returns:
+        marker_list: A list of markers.
         '''
         marker_list: MarkerBordersList = []
         for i, corners_per_marker in enumerate(corner_list):
@@ -174,13 +158,10 @@ class Tracker:
         '''
         Extract the marker center position based on the top-left and bottom-right corner.
 
-        Parameters
-        ----------
-        corners : Corners
-            List or corners.
+        Args:
+        corners: List or corners.
 
-        Returns
-        -------
+        Returns:
         pos : Tuple[int, int]
             Marker center position <x,y>
         '''
@@ -201,15 +182,11 @@ class Tracker:
         '''
         Extract marker corners. Basically this function only converts the position values from floats to integers.
 
-        Parameters
-        ----------
-        corners : Corners
-            List of corners.
+        Args:
+        corners: List of corners.
 
-        Returns
-        -------
-        borders : Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
-            A 4 tuple of corner positions <x,y>.
+        Returns:
+        borders: A 4 tuple of corner positions <x,y>.
         '''
         (tl, tr, br, bl) = corners
         # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
@@ -221,17 +198,12 @@ class Tracker:
         center position and the top left corner position. Then we calculate the length to then calculate the unit vector
         which then can be used to calculate the angle by using arcsin.
 
-        Parameters
-        ----------
-        corners : Corners
-            List of corners.
-        center : Tuple[int, int]
-            Marker center position <x,y>.
+        Args:
+        corners: List of corners.
+        center: Marker center position <x,y>.
 
-        Returns
-        -------
-        angle : float
-            The calculated angle of the marker.
+        Returns:
+        angle: The calculated angle of the marker.
         '''
         x, y = center[0] - corners[0][0], center[1] - corners[0][1]  # Vec from center to top left corner
         len = math.sqrt(math.pow(x, 2) + math.pow(y, 2))  # Calculate length of vec
@@ -242,10 +214,8 @@ class Tracker:
         '''
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
-        Returns
-        -------
-        err : Error
-            Non None if an error occured.
+        Returns:
+        err: Non None if an error occured.
         '''
         self._running = True
 
@@ -287,12 +257,9 @@ class Tracker:
         '''
         Get the current gray scale frame from the tracker.
 
-        Returns
-        -------
-        ok : bool
-            If current frame is available.
-        frame : cv.Mat
-            Current frame.
+        Returns:
+        ok: If current frame is available.
+        frame: Current frame.
         '''
         return self._frame.any(), self._frame
 
@@ -300,12 +267,9 @@ class Tracker:
         '''
         Get the current color frame from the tracker.
 
-        Returns
-        -------
-        ok : bool
-            If current frame is available.
-        frame : cv.Mat
-            Current frame.
+        Returns:
+        ok: If current frame is available.
+        frame: Current frame.
         '''
         return self._frame.any(), self._color_frame
 
@@ -313,10 +277,8 @@ class Tracker:
         '''
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
-        Returns
-        -------
-        err : Error
-            Non None if an error occured.
+        Returns:
+        err: Non None if an error occured.
         '''
         if self._is_running():
             return Err('Already running')
@@ -342,16 +304,9 @@ class Tracker:
         '''
         Notify subscribers with detected markers.
 
-        Parameters
-        ----------
-        corners : CornerList
-            A list of corners of detected markers.
-        ids : IDList
-            A list of detected marker IDs.
-        rejected
-            A list of rejected markers.
-        recovered
-            A list of recovered markers.
+        Args:
+        corners: A list of corners of detected markers.
+        ids: A list of recovered markers.
         '''
         for sub in self._subscribers:
             # If the subription is raw, just pass raw values without any processing
@@ -365,10 +320,8 @@ class Tracker:
         '''
         External consumers can subscribe to this tracker to get real-time marker positions.
 
-        Returns
-        -------
-        subscription : Subscription
-            A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
+        Returns:
+        subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((False, q))
@@ -380,10 +333,8 @@ class Tracker:
         External consumers can subscribe to this tracker to get real-time marker positions. This returns raw tracking
         data instead of cleaned data via the `subscribe` method.
 
-        Returns
-        -------
-        subscription : RawSubscription
-            A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
+        Returns:
+        subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((True, q))
@@ -394,15 +345,11 @@ class Tracker:
         '''
         External subscribers can unsubscribe from this tracker.
 
-        Parameters
-        ----------
-        index : int
-            The subscription ID.
+        Args:
+        index: The subscription ID.
 
-        Returns
-        -------
-        err : Error
-            Non None if an error occured.
+        Returns:
+        err: Non None if an error occured.
         '''
         if index < 0 or index > len(self._subscribers) - 1:
             return Err('Invalid index')

@@ -5,19 +5,13 @@ def host_port_from(host: str, port: int, secure: bool = False) -> str:
     '''
     Creates a http(s)://<host>:<port> string.
 
-    Parameters
-    ----------
-    host : str
-        The IP address or domain of the host
-    port : int
-        Port number
-    secure : bool
-        If True https:// is prefixed, otherwise http://
+    Args:
+        host: The IP address or domain of the host.
+        port: Port number.
+        secure: If True https:// is prefixed, otherwise http://.
 
-    Returns
-    -------
-    host_port : str
-        The http(s)://<host>:<port> string
+    Returns:
+        The http(s)://<host>:<port> string.
     '''
     if not host:
         return ''
@@ -35,17 +29,12 @@ def url_from(base: str, paths: tuple) -> str:
     '''
     Creates a complete URL with 'base' as the base url and each provided 'path' appended with a /.
 
-    Parameters
-    ----------
-    base : str
-        The base URL
-    paths: tuple[str, ...]
-        A variable number of path segments
+    Args:
+        base: The base URL.
+        paths: A variable number of path segments.
 
-    Returns
-    -------
-    url : string
-        Complete URL
+    Returns:
+        Complete URL.
     '''
     url = base
     for p in paths:
@@ -59,14 +48,10 @@ def fps_to_ms(fps: int) -> int:
     '''
     Convert FPS to a millisecond interval.
 
-    Parameters
-    ----------
-    fps : int
-        Input FPS as integer
+    Args:
+        fps: Input FPS as integer.
 
-    Returns
-    -------
-    interval : int
-        Interval in milliseconds as integer number
+    Returns:
+        Interval in milliseconds as integer number.
     '''
     return math.floor((1 / fps) * 1000)

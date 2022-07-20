@@ -67,15 +67,11 @@ class Calibration:
         '''
         Capture images from camera and save them afterwards.
 
-        Parameters
-        ----------
-        grayscale : bool
-            If the captured images should be grayscaled.
+        Args:
+            grayscale: If the captured images should be grayscaled.
 
-        Returns
-        -------
-        err : Error
-            Returns Error if an error was encountered, None if otherwise.
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         cap = cv.VideoCapture(self._cfg['capture']['camera_id'])
 
@@ -103,10 +99,8 @@ class Calibration:
         '''
         Detect markers and interpolate the ChArUco board corners.
 
-        Returns
-        -------
-        err : Error
-            Returns Error if an error was encountered, None if otherwise.
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         for frame in self._frames:
             # First detect ArUco markers in the current frame
@@ -139,9 +133,7 @@ class Calibration:
         '''
         Calibrate the camera based on the detected ChArUco board.
 
-        Returns
-        -------
-        result : CharucoCalibrationResult
+        Returns:
             A tuple consisting of the camera matrix, distortion coefficients, rotation and tranlation vectors.
         '''
         # Extract the camera matrix and distortion coefficients
@@ -160,9 +152,8 @@ class Calibration:
         '''
         Automatically calibrate the camera and projector setup.
 
-        Returns
-        -------
-        result : Result[CharucoCalibrationData, Error]
+        Returns:
+            A result consisting of CharucoCalibrationData or an Error.
         '''
         # Setup calibration renderer and start to render
         r = 0
@@ -185,9 +176,8 @@ class Calibration:
         Calibrate the camera semi-automatic. This is done by capturing multiple images at an even interval while the
         user moves the ChArUco board manually.
 
-        Returns
-        -------
-        result : Result[CharucoCalibrationData, Error]
+        Returns:
+            A result consisting of CharucoCalibrationData or an Error.
         '''
         # First capture a set of frames from the capture device (camera)
         err = self._capture(True)
@@ -212,14 +202,11 @@ class Calibration:
         '''
         Calibrate the camera via the provided calibration mode.
 
-        Parameters
-        ----------
-        mode : CalibrationMode
-            Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL.
+        Args:
+            mode: Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL.
 
-        Returns
-        -------
-        result : Result[CharucoCalibrationData, Error]
+        Returns:
+            A result consisting of CharucoCalibrationData or an Error.
         '''
         match mode:
             case CalibrationMode.AUTO:
@@ -236,14 +223,11 @@ class Calibration:
         Calibrate the camera via the provided calibration mode. This method additionally saves the calibration data
         in the .data/calib.json file.
 
-        Parameters
-        ----------
-        mode : CalibrationMode
-            Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL.
+        Args:
+            mode: Calibration mode. Can be AUTO, SEMI_AUTO or MANUAL.
 
-        Returns
-        -------
-        result : Tuple[CharucoCalibrationResult, Error]
+        Returns:
+            A result consisting of CharucoCalibrationData or an Error.
         '''
         result = self.calibrate(mode)
 
@@ -262,16 +246,12 @@ def dump_calibration_result(path: str, data: CharucoCalibrationData) -> Error:
     '''
     Dump the provided ChArUco calibration result as a pickle file.
 
-    Parameters
-    ----------
-    path : str
-        Path where the calibration data pickle file should be stored.
-    data : CharucoCalibrationResult
-        The ChArUco calibration result.
+    Args:
+        path: Path where the calibration data pickle file should be stored.
+        data: The ChArUco calibration result.
 
-    Returns
-    -------
-    err : Error
+    Returns:
+        An Error if an error was encountered, None if otherwise.
     '''
     try:
         file = open(path, 'wb')
@@ -286,14 +266,11 @@ def read_calibration_result(path: str) -> Result[CharucoCalibrationData, Error]:
     '''
     Read  ChArUco calibration result data from a JSON formatted file at 'path'.
 
-    Parameters
-    ----------
-    path : str
-        Path to the calibration data pickle file.
+    Args:
+        path: Path to the calibration data pickle file.
 
-    Returns
-    -------
-    result : Result[CharucoCalibrationData, Error]
+    Returns:
+        A result consisting of CharucoCalibrationData or an Error.
     '''
     try:
         file = open(path, 'rb')

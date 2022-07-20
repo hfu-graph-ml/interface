@@ -59,17 +59,12 @@ def read_config(path: str, auto_validate: bool = False) -> Result[Config, Error]
     '''
     Read a TOML file at 'path' and return a new Config class.
 
-    Parameters
-    ----------
-    path : str
-        Path to the TOML config file.
-    auto_validate : bool
-        If this config should be auto validated.
+    Args:
+        path: Path to the TOML config file.
+        auto_validate: If this config should be auto validated.
 
-    Returns
-    -------
-    config : Tuple[Config, Error]
-        The decoded config or err when error occured.
+    Returns:
+        The decoded config or Error when error occured.
     '''
     if not path:
         return Err(Error('Invalid/empty path'))
@@ -97,15 +92,11 @@ def validate(cfg: Config) -> Error:
     '''
     Validate config values. Returns an error if validation failed.
 
-    Parameters
-    ----------
-    cfg : Config
-        Config to validate.
+    Args:
+        cfg: Config to validate.
 
-    Returns
-    -------
-    err : Error
-        Non None if validation failed.
+    Returns:
+        An Error if an error was encountered, None if otherwise.
     '''
     if not cfg['backend']['host']:
         return Error('Invalid host')

@@ -34,9 +34,7 @@ class Shared:
         '''
         Returns if the renderer is already running.
 
-        Returns
-        -------
-        running: bool
+        Returns:
             If renderer is running.
         '''
         if self.running:
@@ -49,15 +47,11 @@ class Shared:
         '''
         Subscribe to the tracker.
 
-        Parameters
-        ----------
-        size : int
-            Size of the queue (Default: -1 => Unlimited).
+        Args:
+            size: Size of the queue (Default: -1 => Unlimited).
 
-        Returns
-        -------
-        fn : RetrieveFunc
-            Function to retrieve new marker positions.
+        Returns:
+            A function to retrieve new marker positions.
         '''
         id, params, retrieve = self.tracker.subscribe(size)
         self.camera_frame_height = params[1]
@@ -70,15 +64,11 @@ class Shared:
         '''
         Subscribe to the tracker in raw mode.
 
-        Parameters
-        ----------
-        size : int
-            Size of the queue (Default: -1 => Unlimited).
+        Args:
+            size: Size of the queue (Default: -1 => Unlimited).
 
-        Returns
-        -------
-        fn : RawRetrieveFunc
-            Function to retrieve new marker positions.
+        Returns:
+            A function to retrieve new marker positions.
         '''
         id, params, retrieve = self.tracker.subscribe_raw(size)
         self.camera_frame_height = params[1]
@@ -91,12 +81,9 @@ class Shared:
         '''
         Draw the border around a marker.
 
-        Parameters
-        ----------
-        corners : tuple
-            List of corner positions.
-        frame : cv.Mat
-            Frame to render in.
+        Args:
+            corners: List of corner positions.
+            frame: Frame to render in.
         '''
         cv.line(frame, corners[0], corners[1], COLOR_GREEN, 2)  # Top left to top right
         cv.line(frame, corners[1], corners[2], COLOR_GREEN, 2)  # Top right to bottom right
@@ -107,16 +94,11 @@ class Shared:
         '''
         Draw a circle in the top-left corner and attach the angle as text to it.
 
-        Parameters
-        ----------
-        corners : tuple
-            List of corner positions.
-        angle : float
-            The angle in degrees.
-        frame : cv.Mat
-            Frame to render in.
-        with_text : bool
-            If the angle should be displayed as text.
+        Args:
+            corners: List of corner positions.
+            angle: The angle in degrees.
+            frame: Frame to render in.
+            with_text: If the angle should be displayed as text.
         '''
         cv.circle(frame, corners[0], 4, COLOR_RED, -1)  # Top left corner
         if with_text:
@@ -126,16 +108,11 @@ class Shared:
         '''
         Draw a center point with the ID as text attached to it.
 
-        Parameters
-        ---------
-        pos : tuple
-            Marker center position.
-        id : int
-            Marker ID.
-        frame : cv.Mat
-            Frame to render in.
-        with_text : bool
-            If the marker ID should be displayed as text.
+        Args:
+            pos: Marker center position.
+            id: Marker ID.
+            frame: Frame to render in.
+            with_text: If the marker ID should be displayed as text.
         '''
         cv.circle(frame, pos, 4, COLOR_RED, -1)
         if with_text:
@@ -156,18 +133,13 @@ class Shared:
         '''
         Add a render layer.
 
-        Parameters
-        ----------
-        index : int
-            Layer index. Higher indices render later.
-        name : str
-            Name of the render layer.
-        should_warp : bool
-            If this layer should be warped by the projection transformation (Broken).
+        Args:
+            index: Layer index. Higher indices render later.
+            name: Name of the render layer.
+            should_warp: If this layer should be warped by the projection transformation (Broken).
 
-        Returns
-        -------
-        err : Error
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         if index in self.render_layers.keys():
             return Error(f'A render layer with index {index} ({self.render_layers[index]._name}) already exists')
@@ -179,14 +151,12 @@ class Shared:
         '''
         Add a render object to a render layer.
 
-        index : int
-            Index of the render layer to add to.
-        obj : RenderObject
-            Render object to add.
+        Args:
+            index: Index of the render layer to add to.
+            obj: Render object to add.
 
-        Returns
-        -------
-        err : Error
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         if not index in self.render_layers.keys():
             return Error('A layer at index {index} does not exist')
@@ -198,18 +168,13 @@ class Shared:
         '''
         Add a render object to a render layer at a specific index.
 
-        Parameters
-        ----------
-        layer_index : int
-            The layer index to add to.
-        obj_index : int
-            Object index to add object at.
-        obj : RenderObject
-            Object to add.
+        Args:
+            layer_index: The layer index to add to.
+            obj_index: Object index to add object at.
+            obj: Object to add.
 
-        Returns
-        -------
-        err : Error
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         if not layer_index in self.render_layers.keys():
             return Error(f'A layer at index {layer_index} does not exist')
@@ -219,16 +184,12 @@ class Shared:
         '''
         Get a render object on a layer by index.
 
-        Parameters
-        ----------
-        layer_index : int
-            The layer index.
-        obj_index : int
-            The object index.
+        Args:
+            layer_index: The layer index.
+            obj_index: The object index.
 
-        Returns
-        -------
-        result : Result[RenderObject, Error]
+        Returns:
+            A result consisting of a RenderObject or an Error.
         '''
         if not layer_index in self.render_layers.keys():
             return Error(f'A layer at index {layer_index} does not exist')
@@ -239,16 +200,11 @@ class Shared:
         '''
         Render the render layers one after each other.
 
-        Parameters
-        ----------
-        frame : cv.Mat
-            The frame to render in.
-        matrix:
-            Projection transformation matrix (Broken).
-        width : int
-            Frame width
-        height : int
-            Frame height
+        Args:
+            frame: The frame to render in.
+            matrix: Projection transformation matrix (Broken).
+            width: Frame width.
+            height: Frame height.
         '''
         # First we render all layers which should be warped
         remanining: List[RenderLayer] = []

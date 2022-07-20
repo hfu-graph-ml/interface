@@ -30,23 +30,16 @@ class Generator:
         '''
         Generate a variable number of ArUco markers.
 
-        Parameters
-        ----------
-        number : int
-            Number of ArUco markers to generate.
-        res : int
-            Resolution of the markers in pixels (e.g. 300x300).
-        usage : Usage
-            For which purpose the marker will be used (calibration or as nodes).
-        start_id : int
-            The ID (index) to start at. This is usefull when generating
-            calibration and node markers at the same time. This prevents
-            duplicate IDs.
+        Args:
+            number: Number of ArUco markers to generate.
+            res: Resolution of the markers in pixels (e.g. 300x300).
+            usage: For which purpose the marker will be used (calibration or as nodes).
+            start_id : The ID (index) to start at. This is usefull when generating
+                calibration and node markers at the same time. This prevents
+                duplicate IDs.
 
-        Returns
-        -------
-        err : Error
-            None if no error occured.
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:
@@ -112,21 +105,14 @@ class BoardGenerator():
         '''
         Generate ChArUco board.
 
-        Parameters
-        ----------
-        cols : int
-            The number of columns.
-        rows : int
-            The number of rows.
-        res_width : int
-            Width of the generated image in pixels.
-        res_height : int
-            Height of the generated image in pixels.
+        Args:
+            cols: The number of columns.
+            rows: The number of rows.
+            res_width: Width of the generated image in pixels.
+            res_height: Height of the generated image in pixels.
 
-        Returns
-        -------
-        err : Error
-            Non None if error occured.
+        Returns:
+            An Error if an error was encountered, None if otherwise.
         '''
         # Make sure the generator was initialized correctly
         if self._type == -1 or self._dict == None:

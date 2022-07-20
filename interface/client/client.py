@@ -21,10 +21,8 @@ class Client:
         '''
         Create a new client instance.
 
-        Parameters
-        ----------
-        cfg : config.Config
-            The config.
+        Args:
+        cfg: The config.
         '''
         if not cfg:
             raise ValueError
@@ -37,19 +35,14 @@ class Client:
     def _post(self, *paths: str, params: dict = {}, data: any = None):
         '''
         Internal method to create HTTP POST requests.
-        Parameters
-        ----------
-        paths : tuple[str, ...]
-            Variable number of path segments.
-        params : dict
-            A dict of query parameters (Default: {}).
-        data : any
-            Request body data (Default: None).
 
-        Returns
-        -------
-        result : Result
-            Result object.
+        Args:
+            paths: Variable number of path segments.
+            params: A dict of query parameters (Default: {}).
+            data: Request body data (Default: None).
+
+        Returns:
+            A result object.
         '''
         url = fmt.url_from(self.base_url, paths)
         if not url:
@@ -69,19 +62,13 @@ class Client:
         '''
         Internal method to create HTTP GET requests.
 
-        Parameters
-        ----------
-        paths : tuple[str, ...]
-            Variable number of path segments.
-        params : dict
-            A dict of query parameters (Default: {}).
-        data : any
-            Request body data (Default: None).
+        Args:
+            paths: Variable number of path segments.
+            params: A dict of query parameters (Default: {}).
+            data: Request body data (Default: None).
 
-        Returns
-        -------
-        result : Result
-            Result object.
+        Returns:
+            A result object.
         '''
         url = fmt.url_from(self.base_url, paths)
         if not url:
@@ -101,9 +88,7 @@ class Client:
         '''
         Get graph data from the REST API as JSON.
 
-        Returns
-        -------
-        result: Tuple[Graph, Error]
+        Returns:
             Returns the graph data. If error is not None, an error occured and should be handled.
         '''
         res = self._get('graphs')
@@ -117,14 +102,10 @@ class Client:
         '''
         Send updated graph data to the REST API as JSON.
 
-        Parameters
-        ----------
-        data : Graph
-            The updated graph data.
+        Args:
+            data: The updated graph data.
 
-        Returns
-        -------
-        res : BaseResponse
+        Returns:
             A response indicating the success.
         '''
         if not data:
