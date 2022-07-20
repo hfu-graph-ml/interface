@@ -33,8 +33,8 @@ class Tracker:
         Create a new tracker instance.
 
         Args:
-        cfg: Configuration data.
-        calib_data: Camera calibration data.
+            cfg: Configuration data.
+            calib_data: Camera calibration data.
         '''
         typ = aruco.type_from(
             cfg['capture']['aruco']['size'],
@@ -78,7 +78,7 @@ class Tracker:
         Setup ArUco detection params, capture device and wait delay.
 
         Returns:
-        values: The capture device, ArUco detection params and wait delay.
+            The capture device, ArUco detection params and wait delay.
         '''
         params = cv.aruco.DetectorParameters_create()
         cap = cv.VideoCapture(self._camera_id)
@@ -98,7 +98,6 @@ class Tracker:
         Returns if the renderer is already running.
 
         Returns:
-        running: bool
             If renderer is running.
         '''
         if self._running:
@@ -113,11 +112,11 @@ class Tracker:
         of the center position <x,y>, the rotation angle and the ID.
 
         Args:
-        corner_list: A list of corners.
-        ids: A list of IDs.
+            corner_list: A list of corners.
+            ids: A list of IDs.
 
         Returns:
-        marker_list: A list of markers.
+            A list of markers.
         '''
         marker_list: MarkerCenterList = []
         for i, corners_per_marker in enumerate(corner_list):
@@ -136,11 +135,11 @@ class Tracker:
         of corner positions <x,y>, the center position <x,y>, the rotation angle and the ID.
 
         Args:
-        corner_list: A list of corners.
-        ids: A list of IDs.
+            corner_list: A list of corners.
+            ids: A list of IDs.
 
         Returns:
-        marker_list: A list of markers.
+            A list of markers.
         '''
         marker_list: MarkerBordersList = []
         for i, corners_per_marker in enumerate(corner_list):
@@ -159,11 +158,10 @@ class Tracker:
         Extract the marker center position based on the top-left and bottom-right corner.
 
         Args:
-        corners: List or corners.
+            corners: List or corners.
 
         Returns:
-        pos : Tuple[int, int]
-            Marker center position <x,y>
+            Marker center position (x,y).
         '''
         center_x = int((corners[0][0] + corners[2][0]) / 2)
         center_y = int((corners[0][1] + corners[2][1]) / 2)
@@ -183,10 +181,10 @@ class Tracker:
         Extract marker corners. Basically this function only converts the position values from floats to integers.
 
         Args:
-        corners: List of corners.
+            corners: List of corners.
 
         Returns:
-        borders: A 4 tuple of corner positions <x,y>.
+            A 4-tuple of corner positions (x,y).
         '''
         (tl, tr, br, bl) = corners
         # NOTE (Techassi): This is giga ugly but I don't know of a better way to achieve this
@@ -199,11 +197,11 @@ class Tracker:
         which then can be used to calculate the angle by using arcsin.
 
         Args:
-        corners: List of corners.
-        center: Marker center position <x,y>.
+            corners: List of corners.
+            center: Marker center position (x,y).
 
         Returns:
-        angle: The calculated angle of the marker.
+            The calculated angle of the marker.
         '''
         x, y = center[0] - corners[0][0], center[1] - corners[0][1]  # Vec from center to top left corner
         len = math.sqrt(math.pow(x, 2) + math.pow(y, 2))  # Calculate length of vec
@@ -215,7 +213,7 @@ class Tracker:
         Run the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
         Returns:
-        err: Non None if an error occured.
+            Non None if an error occured.
         '''
         self._running = True
 
@@ -258,8 +256,8 @@ class Tracker:
         Get the current gray scale frame from the tracker.
 
         Returns:
-        ok: If current frame is available.
-        frame: Current frame.
+            ok: If current frame is available.
+            frame: Current frame.
         '''
         return self._frame.any(), self._frame
 
@@ -268,8 +266,8 @@ class Tracker:
         Get the current color frame from the tracker.
 
         Returns:
-        ok: If current frame is available.
-        frame: Current frame.
+            ok: If current frame is available.
+            frame: Current frame.
         '''
         return self._frame.any(), self._color_frame
 
@@ -278,7 +276,7 @@ class Tracker:
         Start the main tracking loop. This sets up the ArUco detection params, the video capture and starts tracking.
 
         Returns:
-        err: Non None if an error occured.
+            Non None if an error occured.
         '''
         if self._is_running():
             return Err('Already running')
@@ -305,8 +303,8 @@ class Tracker:
         Notify subscribers with detected markers.
 
         Args:
-        corners: A list of corners of detected markers.
-        ids: A list of recovered markers.
+            corners: A list of corners of detected markers.
+            ids: A list of recovered markers.
         '''
         for sub in self._subscribers:
             # If the subription is raw, just pass raw values without any processing
@@ -321,7 +319,7 @@ class Tracker:
         External consumers can subscribe to this tracker to get real-time marker positions.
 
         Returns:
-        subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
+            subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((False, q))
@@ -334,7 +332,7 @@ class Tracker:
         data instead of cleaned data via the `subscribe` method.
 
         Returns:
-        subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
+            subscription: A tuple consisting of the subscription ID, frame widht and height and the retrieve function.
         '''
         q = Queue(size)
         self._subscribers.append((True, q))
@@ -346,10 +344,10 @@ class Tracker:
         External subscribers can unsubscribe from this tracker.
 
         Args:
-        index: The subscription ID.
+            index: The subscription ID.
 
         Returns:
-        err: Non None if an error occured.
+            Non None if an error occured.
         '''
         if index < 0 or index > len(self._subscribers) - 1:
             return Err('Invalid index')
