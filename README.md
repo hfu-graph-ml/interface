@@ -24,7 +24,7 @@ After copying the `default.toml` config file to `config.toml` and making any nec
 like:
 
 ```shell
-python src/main.py <SUBCOMMAND>
+python interface/main.py <SUBCOMMAND>
 ```
 
 ## Usage
@@ -35,7 +35,7 @@ The `track` command allows to debug the ArUco tracking process. It uses the debu
 as the tracker.
 
 ```shell
-python src/main.py track
+python interface/main.py track
 ```
 
 ### Camera calibration
@@ -54,17 +54,17 @@ be printed out and moved around manually.
 The data is stored in `.data/calib.json` regardless of the mode.
 
 ```shell
-python src/main.py calib
+python interface/main.py calib
 ```
 
 ### Marker Generation
 
 ```shell
-python src/main.py gen markers
+python interface/main.py gen markers
 ```
 
 ### Board Generation
 
 ```shell
-python src/main.py gen board
+python interface/main.py gen board
 ```
