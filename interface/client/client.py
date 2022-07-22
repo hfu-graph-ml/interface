@@ -22,7 +22,7 @@ class Client:
         Create a new client instance.
 
         Args:
-        cfg: The config.
+            cfg: The config.
         '''
         if not cfg:
             raise ValueError
