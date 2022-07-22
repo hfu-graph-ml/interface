@@ -1,0 +1,45 @@
+site_name: HFU Graph ML - Interface
+site_url: https://hfu-graph-ml.github.io/interface
+site_author: HFU Graph ML Team
+site_dir: "build"
+
+repo_url: https://github.com/hfu-graph-ml/interface
+repo_name: hfu-graph-ml/interface
+edit_uri: edit/main/docs
+
+theme:
+  name: "material"
+
+  # Dark / Light mode toggle
+  palette:
+    - scheme: default
+      primary: white
+      accent: green
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+    
+  features:
+    - navigation.tabs        # Enable tab navigation
+    - navigation.tabs.sticky # Navigation tabs will be visible when scrolling
+    - navigation.top         # Enable 'back to top' button
+    - navigation.sections    # Enable nav sections
+
+extra_css:
+  - css/extra.css
+
+markdown_extensions:
+  - meta
+
+plugins:
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - mkdocstrings
+  - search
