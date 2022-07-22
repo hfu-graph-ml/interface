@@ -1,0 +1,34 @@
+name: build-docs
+on:
+  push
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.5
+          cache: 'pip'
+      - name: Create venv
+        run: python -m venv .venv
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build static content
+        run: mkdocs build
+      - name: Check GitHub Pages status
+        uses: crazy-max/ghaction-github-status@v3
+        with:
+          pages_threshold: major_outage
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: gh-pages
+          build_dir: build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
